@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { Movie } from './types/movie';
 import type { BookingSelection, BookingConfirmation } from './types/booking';
+import type { AuthUser } from './types/auth';
 import { fetchMoviesFromApi } from './services/movieApi';
+import { getStoredUser, getStoredToken, clearStoredAuth, fetchMeApi } from './services/authApi';
 import { Navbar } from './components/Navbar';
 import { FeaturedMovie } from './components/FeaturedMovie';
 import { MovieGrid } from './components/MovieGrid';
@@ -11,6 +13,8 @@ import { SeatSelection } from './components/SeatSelection';
 import { BookingSummary } from './components/BookingSummary';
 import { BookingConfirmationView } from './components/BookingConfirmationView';
 import { TrailerModal } from './components/TrailerModal';
+import { AuthModal } from './components/AuthModal';
+import { MyBookingsModal } from './components/MyBookingsModal';
 import { Footer } from './components/Footer';
 import './App.css';
 
@@ -20,6 +24,12 @@ type AppView = 'LISTING' | 'SHOWTIMES' | 'SEAT_SELECTION' | 'BOOKING_SUMMARY' | 
 function App() {
   // Navigation & View State
   const [currentView, setCurrentView] = useState<AppView>('LISTING');
+
+  // Authentication & User States
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(getStoredUser());
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMessage, setAuthModalMessage] = useState<string | undefined>();
+  const [isBookingsModalOpen, setIsBookingsModalOpen] = useState(false);
 
   // Backend Live Movie Data States
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -68,6 +78,30 @@ function App() {
       isMounted = false;
     };
   }, []);
+
+  // Validate active session token with backend /api/auth/me
+  useEffect(() => {
+    if (getStoredToken()) {
+      fetchMeApi()
+        .then((user) => setCurrentUser(user))
+        .catch(() => setCurrentUser(null));
+    }
+  }, []);
+
+  const handleOpenAuth = (msg?: string) => {
+    setAuthModalMessage(msg);
+    setIsAuthModalOpen(true);
+  };
+
+  const handleLogout = () => {
+    clearStoredAuth();
+    setCurrentUser(null);
+  };
+
+  const handleAuthSuccess = (user: AuthUser) => {
+    setCurrentUser(user);
+    setIsAuthModalOpen(false);
+  };
 
   // Explicit user-triggered retry
   const handleRetry = () => {
@@ -234,6 +268,16 @@ function App() {
         onSearchChange={setSearchQuery}
         selectedCity={selectedCity}
         onCityChange={setSelectedCity}
+        currentUser={currentUser}
+        onOpenAuth={() => handleOpenAuth()}
+        onOpenBookings={() => {
+          if (!currentUser) {
+            handleOpenAuth('Sign in to view your booked tickets');
+          } else {
+            setIsBookingsModalOpen(true);
+          }
+        }}
+        onLogout={handleLogout}
       />
 
       <main className="main-content">
@@ -350,6 +394,10 @@ function App() {
           <BookingSummary
             selection={activeBookingSelection}
             selectedSeats={selectedSeats}
+            currentUser={currentUser}
+            onRequestAuth={() =>
+              handleOpenAuth('Please sign in or create an account to confirm your ticket booking.')
+            }
             onBackToSeats={handleBackToSeats}
             onPaymentSuccess={handlePaymentSuccess}
           />
@@ -372,6 +420,21 @@ function App() {
         movie={trailerMovie}
         onClose={() => setTrailerMovie(null)}
         onBookTickets={handleStartBooking}
+      />
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+        message={authModalMessage}
+      />
+
+      {/* My Bookings History Modal */}
+      <MyBookingsModal
+        isOpen={isBookingsModalOpen}
+        onClose={() => setIsBookingsModalOpen(false)}
+        currentUser={currentUser}
       />
     </div>
   );

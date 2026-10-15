@@ -1,5 +1,6 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from datetime import datetime
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 
 
 class HealthResponse(BaseModel):
@@ -28,3 +29,78 @@ class MovieResponse(BaseModel):
     director: Optional[str] = Field(default=None, description="Film director name")
     cast: Optional[List[str]] = Field(default=None, description="Starring cast list")
     trailerYoutubeId: Optional[str] = Field(default=None, description="YouTube trailer teaser ID")
+
+
+# --- Auth Models ---
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=6, description="Password at least 6 characters")
+    full_name: str = Field(..., min_length=2, description="User full display name")
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    full_name: str
+    created_at: datetime
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
+# --- Seat & Showtime Models ---
+class ShowtimeSeatsResponse(BaseModel):
+    showtime_id: str
+    booked_seats: List[str]
+
+
+# --- Booking Models ---
+class BookingCreateRequest(BaseModel):
+    showtime_id: str
+    movie_id: Optional[str] = None
+    movie_title: Optional[str] = None
+    theater_name: Optional[str] = None
+    theater_location: Optional[str] = None
+    show_date: Optional[str] = None
+    show_time: Optional[str] = None
+    format: Optional[str] = None
+    seats: List[str] = Field(..., min_length=1, description="List of seat identifiers, e.g. ['A1', 'A2']")
+    payment_method: str = Field(default="upi", description="Payment method: upi, card, or netbanking")
+    price_per_seat: int = Field(..., gt=0)
+    subtotal: int = Field(..., gt=0)
+    convenience_fee: int = Field(default=0, ge=0)
+    total_amount: int = Field(..., gt=0)
+
+
+class BookingResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    booking_ref: str
+    showtime_id: str
+    movie_id: Optional[str] = None
+    movie_title: str
+    theater_name: str
+    theater_location: Optional[str] = None
+    show_date: str
+    show_time: str
+    format: str
+    seats: List[str]
+    seat_count: int
+    price_per_seat: int
+    subtotal: int
+    convenience_fee: int
+    total_amount: int
+    payment_method: str
+    payment_status: str
+    created_at: datetime

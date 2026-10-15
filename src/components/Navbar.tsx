@@ -1,8 +1,14 @@
+import type { AuthUser } from '../types/auth';
+
 interface NavbarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   selectedCity: string;
   onCityChange: (city: string) => void;
+  currentUser: AuthUser | null;
+  onOpenAuth: () => void;
+  onOpenBookings: () => void;
+  onLogout: () => void;
 }
 
 export const Navbar = ({
@@ -10,6 +16,10 @@ export const Navbar = ({
   onSearchChange,
   selectedCity,
   onCityChange,
+  currentUser,
+  onOpenAuth,
+  onOpenBookings,
+  onLogout,
 }: NavbarProps) => {
   return (
     <header className="navbar">
@@ -68,14 +78,41 @@ export const Navbar = ({
               </select>
             </div>
 
-            <button
-              type="button"
-              className="btn btn-secondary nav-signin-btn"
-              onClick={() => alert('User Sign In & Profiles will be enabled in future milestones!')}
-            >
-              <span className="avatar-icon">👤</span>
-              <span>Sign In</span>
-            </button>
+            {currentUser ? (
+              <div className="nav-user-actions">
+                <button
+                  type="button"
+                  className="btn btn-outline nav-bookings-btn"
+                  onClick={onOpenBookings}
+                  title="View your booked tickets"
+                >
+                  🎟️ My Tickets
+                </button>
+                <div className="nav-user-profile" title={currentUser.email}>
+                  <span className="avatar-icon">👤</span>
+                  <span className="user-name-text">
+                    {currentUser.full_name.split(' ')[0]}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary nav-logout-btn"
+                  onClick={onLogout}
+                  title="Log out of your account"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary nav-signin-btn"
+                onClick={onOpenAuth}
+              >
+                <span className="avatar-icon">👤</span>
+                <span>Sign In</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

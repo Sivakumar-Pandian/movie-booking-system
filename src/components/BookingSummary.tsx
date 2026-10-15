@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import type { BookingSelection, BookingConfirmation, PaymentMethod } from '../types/booking';
+import type { AuthUser } from '../types/auth';
+import { createRealBooking } from '../services/bookingApi';
 
 interface BookingSummaryProps {
   selection: BookingSelection;
   selectedSeats: string[];
+  currentUser: AuthUser | null;
+  onRequestAuth: () => void;
   onBackToSeats: () => void;
   onPaymentSuccess: (confirmation: BookingConfirmation) => void;
 }
@@ -11,6 +15,8 @@ interface BookingSummaryProps {
 export const BookingSummary = ({
   selection,
   selectedSeats,
+  currentUser,
+  onRequestAuth,
   onBackToSeats,
   onPaymentSuccess,
 }: BookingSummaryProps) => {
@@ -40,44 +46,73 @@ export const BookingSummary = ({
   // Validation: Guard against checkout if no seats are selected
   const hasValidSeats = seatCount > 0;
 
-  const handleExecutePayment = (forcedOutcome?: 'success' | 'failure') => {
+  const handleExecutePayment = async (forcedOutcome?: 'success' | 'failure') => {
     if (!hasValidSeats || isProcessing) return;
+
+    // Check if user is logged in
+    if (!currentUser) {
+      onRequestAuth();
+      return;
+    }
 
     const outcome = forcedOutcome ?? simulationMode;
     setIsProcessing(true);
     setPaymentError(null);
 
-    // Simulate 1.2-second network delay for mock banking gateway
-    setTimeout(() => {
-      setIsProcessing(false);
-
-      if (outcome === 'success') {
-        // Generate random realistic booking reference for this session
-        const randomNum = Math.floor(100000 + Math.random() * 900000);
-        const bookingRef = `YZG-${randomNum}`;
-        const timestamp = new Date().toLocaleString('en-IN', {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        });
-
-        onPaymentSuccess({
-          bookingRef,
-          bookingTimestamp: timestamp,
-          selection,
-          selectedSeats,
-          pricePerSeat,
-          subtotal,
-          convenienceFee,
-          totalAmount,
-          paymentMethod,
-        });
-      } else {
-        // Simulated failure
+    if (outcome === 'failure') {
+      // Simulate gateway failure
+      setTimeout(() => {
+        setIsProcessing(false);
         setPaymentError(
           'Simulated Payment Declined: Your test transaction could not be processed by the mock bank gateway. Please try again.'
         );
+      }, 1000);
+      return;
+    }
+
+    try {
+      // Persist real booking to backend database with atomic double-booking safety
+      const savedBooking = await createRealBooking({
+        showtime_id: showtime.id,
+        movie_title: movie.title,
+        theater_name: theater.name,
+        theater_location: theater.location,
+        show_date: date.fullDate,
+        show_time: showtime.time,
+        format: showtime.format,
+        seats: selectedSeats,
+        payment_method: paymentMethod,
+        price_per_seat: pricePerSeat,
+        subtotal: subtotal,
+        convenience_fee: convenienceFee,
+        total_amount: totalAmount,
+      });
+
+      const timestamp = new Date(savedBooking.created_at).toLocaleString('en-IN', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      });
+
+      setIsProcessing(false);
+      onPaymentSuccess({
+        bookingRef: savedBooking.booking_ref,
+        bookingTimestamp: timestamp,
+        selection,
+        selectedSeats,
+        pricePerSeat,
+        subtotal,
+        convenienceFee,
+        totalAmount,
+        paymentMethod,
+      });
+    } catch (err: unknown) {
+      setIsProcessing(false);
+      if (err instanceof Error) {
+        setPaymentError(err.message);
+      } else {
+        setPaymentError('An error occurred during booking. Please try again.');
       }
-    }, 1200);
+    }
   };
 
   return (

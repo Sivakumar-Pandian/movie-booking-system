@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import type { BookingSelection } from '../types/booking';
 import { INITIAL_SEAT_LAYOUT } from '../data/seats';
+import { fetchShowtimeBookedSeats } from '../services/bookingApi';
 
 interface SeatSelectionProps {
   booking: BookingSelection;
@@ -17,6 +19,27 @@ export const SeatSelection = ({
   onProceedToSummary,
 }: SeatSelectionProps) => {
   const { movie, date, theater, showtime } = booking;
+  const [liveBookedSeats, setLiveBookedSeats] = useState<string[]>([]);
+  const [loadingLiveSeats, setLoadingLiveSeats] = useState<boolean>(true);
+
+  // Fetch live confirmed booked seats from backend database
+  useEffect(() => {
+    let isCurrent = true;
+    setLoadingLiveSeats(true);
+    fetchShowtimeBookedSeats(showtime.id)
+      .then((booked) => {
+        if (isCurrent) {
+          setLiveBookedSeats(booked);
+          setLoadingLiveSeats(false);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) setLoadingLiveSeats(false);
+      });
+    return () => {
+      isCurrent = false;
+    };
+  }, [showtime.id]);
 
   // Derived Values calculated directly from props:
   const seatCount = selectedSeats.length;
@@ -72,6 +95,10 @@ export const SeatSelection = ({
             <span className="legend-swatch swatch-unavailable" />
             <span>Unavailable / Booked</span>
           </div>
+          <div className="legend-entry live-sync-indicator">
+            <span className="live-dot" />
+            <span>{loadingLiveSeats ? 'Syncing Seats...' : '⚡ Real-time DB Synced'}</span>
+          </div>
         </div>
 
         {/* Interactive Seating Matrix */}
@@ -85,8 +112,9 @@ export const SeatSelection = ({
                 {/* Left Wing Seats (Seats 1 to 5) */}
                 <div className="seat-wing left-wing">
                   {seatRow.seats.slice(0, 5).map((seat) => {
+                    const isBooked = seat.isUnavailable || liveBookedSeats.includes(seat.id);
                     const isSelected = selectedSeats.includes(seat.id);
-                    const seatStatusClass = seat.isUnavailable
+                    const seatStatusClass = isBooked
                       ? 'seat-unavailable'
                       : isSelected
                       ? 'seat-selected'
@@ -96,12 +124,12 @@ export const SeatSelection = ({
                       <button
                         key={seat.id}
                         type="button"
-                        disabled={seat.isUnavailable}
+                        disabled={isBooked}
                         aria-pressed={isSelected}
-                        aria-label={`Seat ${seat.id}, ${seat.isUnavailable ? 'Unavailable' : isSelected ? 'Selected' : 'Available'}`}
+                        aria-label={`Seat ${seat.id}, ${isBooked ? 'Unavailable' : isSelected ? 'Selected' : 'Available'}`}
                         className={`interactive-seat-btn ${seatStatusClass}`}
                         onClick={() => {
-                          if (!seat.isUnavailable) {
+                          if (!isBooked) {
                             onToggleSeat(seat.id);
                           }
                         }}
@@ -120,8 +148,9 @@ export const SeatSelection = ({
                 {/* Right Wing Seats (Seats 6 to 10) */}
                 <div className="seat-wing right-wing">
                   {seatRow.seats.slice(5, 10).map((seat) => {
+                    const isBooked = seat.isUnavailable || liveBookedSeats.includes(seat.id);
                     const isSelected = selectedSeats.includes(seat.id);
-                    const seatStatusClass = seat.isUnavailable
+                    const seatStatusClass = isBooked
                       ? 'seat-unavailable'
                       : isSelected
                       ? 'seat-selected'
@@ -131,12 +160,12 @@ export const SeatSelection = ({
                       <button
                         key={seat.id}
                         type="button"
-                        disabled={seat.isUnavailable}
+                        disabled={isBooked}
                         aria-pressed={isSelected}
-                        aria-label={`Seat ${seat.id}, ${seat.isUnavailable ? 'Unavailable' : isSelected ? 'Selected' : 'Available'}`}
+                        aria-label={`Seat ${seat.id}, ${isBooked ? 'Unavailable' : isSelected ? 'Selected' : 'Available'}`}
                         className={`interactive-seat-btn ${seatStatusClass}`}
                         onClick={() => {
-                          if (!seat.isUnavailable) {
+                          if (!isBooked) {
                             onToggleSeat(seat.id);
                           }
                         }}
