@@ -46,9 +46,16 @@ export interface SeatRow {
   category: 'Classic' | 'Prime' | 'Recliner';
 }
 
-export interface ConfirmedBooking {
+export type PaymentMethod = 'upi' | 'card' | 'netbanking';
+
+export interface BookingConfirmation {
+  bookingRef: string;
+  bookingTimestamp: string;
   selection: BookingSelection;
   selectedSeats: string[];
   pricePerSeat: number;
-  totalPrice: number;
+  subtotal: number;
+  convenienceFee: number;
+  totalAmount: number;
+  paymentMethod: PaymentMethod;
 }

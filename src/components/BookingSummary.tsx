@@ -1,21 +1,84 @@
-import type { ConfirmedBooking } from '../types/booking';
+import { useState } from 'react';
+import type { BookingSelection, BookingConfirmation, PaymentMethod } from '../types/booking';
 
 interface BookingSummaryProps {
-  confirmedBooking: ConfirmedBooking;
+  selection: BookingSelection;
+  selectedSeats: string[];
   onBackToSeats: () => void;
-  onBackToListing: () => void;
+  onPaymentSuccess: (confirmation: BookingConfirmation) => void;
 }
 
 export const BookingSummary = ({
-  confirmedBooking,
+  selection,
+  selectedSeats,
   onBackToSeats,
-  onBackToListing,
+  onPaymentSuccess,
 }: BookingSummaryProps) => {
-  const { selection, selectedSeats, pricePerSeat, totalPrice } = confirmedBooking;
   const { movie, date, theater, showtime } = selection;
 
-  const bookingFee = Math.round(selectedSeats.length * 28);
-  const grandTotal = totalPrice + bookingFee;
+  // Derived calculations (Computed on the fly directly from selections)
+  const seatCount = selectedSeats.length;
+  const pricePerSeat = showtime.price;
+  const subtotal = seatCount * pricePerSeat;
+  // Sample convenience fee: ₹28 per seat (standard cinema booking fee)
+  const convenienceFee = seatCount > 0 ? seatCount * 28 : 0;
+  const totalAmount = subtotal + convenienceFee;
+
+  // Mock Payment Form States
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('upi');
+  const [upiId, setUpiId] = useState('moviegoer@yozigo');
+  const [cardNumber, setCardNumber] = useState('4532 •••• •••• 8821');
+  const [cardExpiry, setCardExpiry] = useState('08/29');
+  const [cardCvv, setCardCvv] = useState('321');
+  const [selectedBank, setSelectedBank] = useState('HDFC Bank');
+
+  // Simulated Payment Execution States
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [simulationMode, setSimulationMode] = useState<'success' | 'failure'>('success');
+
+  // Validation: Guard against checkout if no seats are selected
+  const hasValidSeats = seatCount > 0;
+
+  const handleExecutePayment = (forcedOutcome?: 'success' | 'failure') => {
+    if (!hasValidSeats || isProcessing) return;
+
+    const outcome = forcedOutcome ?? simulationMode;
+    setIsProcessing(true);
+    setPaymentError(null);
+
+    // Simulate 1.2-second network delay for mock banking gateway
+    setTimeout(() => {
+      setIsProcessing(false);
+
+      if (outcome === 'success') {
+        // Generate random realistic booking reference for this session
+        const randomNum = Math.floor(100000 + Math.random() * 900000);
+        const bookingRef = `YZG-${randomNum}`;
+        const timestamp = new Date().toLocaleString('en-IN', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        });
+
+        onPaymentSuccess({
+          bookingRef,
+          bookingTimestamp: timestamp,
+          selection,
+          selectedSeats,
+          pricePerSeat,
+          subtotal,
+          convenienceFee,
+          totalAmount,
+          paymentMethod,
+        });
+      } else {
+        // Simulated failure
+        setPaymentError(
+          'Simulated Payment Declined: Your test transaction could not be processed by the mock bank gateway. Please try again.'
+        );
+      }
+    }, 1200);
+  };
 
   return (
     <div className="summary-view-container">
@@ -26,26 +89,44 @@ export const BookingSummary = ({
             type="button"
             className="btn btn-secondary back-button"
             onClick={onBackToSeats}
+            disabled={isProcessing}
           >
-            ← Change Selected Seats
+            ← Back to Seats ({seatCount})
           </button>
-          <span className="summary-page-title">Booking Order Summary</span>
+          <span className="summary-page-title">Booking Summary & Payment</span>
         </div>
       </div>
 
       <div className="summary-main-wrapper">
+        {/* Guard warning if no seats are selected */}
+        {!hasValidSeats && (
+          <div className="empty-seats-alert" role="alert">
+            <span className="alert-icon">⚠️</span>
+            <div>
+              <strong>No Seats Selected:</strong> You cannot proceed to payment without selecting at least one seat.
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={onBackToSeats}
+            >
+              Select Seats Now
+            </button>
+          </div>
+        )}
+
         <div className="summary-card-container">
           {/* Header Ticket Strip */}
           <div className="ticket-header-strip">
             <span className="ticket-icon">🎟️</span>
             <div>
-              <span className="ticket-badge">E-TICKET PREVIEW</span>
+              <span className="ticket-badge">CHECKOUT REVIEW</span>
               <h1 className="ticket-movie-title">{movie.title}</h1>
             </div>
           </div>
 
           <div className="ticket-body-grid">
-            {/* Left Col: Poster & Cinema Meta */}
+            {/* Left Col: Movie, Theater & Seat Details */}
             <div className="ticket-meta-col">
               <img
                 src={movie.posterUrl}
@@ -58,86 +139,270 @@ export const BookingSummary = ({
                   <span className="badge">⏱️ {movie.duration}</span>
                   <span className="badge">🗣️ {movie.language}</span>
                 </div>
+
                 <div className="ticket-theater-box">
                   <span className="meta-label">Cinema Theater</span>
                   <strong className="meta-val">📍 {theater.name}</strong>
                   <span className="meta-sub">{theater.location}</span>
                 </div>
+
                 <div className="ticket-datetime-box">
-                  <span className="meta-label">Date & Time</span>
+                  <span className="meta-label">Show Date & Time</span>
                   <strong className="meta-val">📅 {date.fullDate}</strong>
-                  <span className="meta-sub">⏰ {showtime.time} ({showtime.format})</span>
+                  <span className="meta-sub">⏰ {showtime.time} • Format: {showtime.format}</span>
+                </div>
+
+                {/* Selected Seats Chips */}
+                <div className="ticket-seats-box">
+                  <span className="meta-label">Selected Seats ({seatCount})</span>
+                  {hasValidSeats ? (
+                    <div className="confirmed-seat-chips">
+                      {selectedSeats.map((seatId) => (
+                        <span key={seatId} className="confirmed-seat-pill">
+                          {seatId}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="no-seats-text">None selected</span>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Right Col: Seats & Invoice Breakdown */}
+            {/* Right Col: Price Breakdown & Simulated Payment */}
             <div className="ticket-receipt-col">
-              {/* Selected Seats Banner */}
-              <div className="confirmed-seats-box">
-                <span className="seats-box-title">Selected Seats ({selectedSeats.length})</span>
-                <div className="confirmed-seat-chips">
-                  {selectedSeats.map((seatId) => (
-                    <span key={seatId} className="confirmed-seat-pill">
-                      {seatId}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Price Breakdown Calculation */}
+              {/* Price Calculation (Strictly Derived) */}
               <div className="receipt-breakdown-box">
-                <h3 className="breakdown-title">Payment Summary</h3>
+                <h3 className="breakdown-title">Fare Breakdown</h3>
 
                 <div className="breakdown-row">
-                  <span>Tickets ({selectedSeats.length} × ₹{pricePerSeat})</span>
-                  <span>₹{totalPrice}</span>
+                  <span>Tickets ({seatCount} × ₹{pricePerSeat})</span>
+                  <span>₹{subtotal}</span>
                 </div>
 
                 <div className="breakdown-row">
-                  <span>Convenience Fee & Taxes</span>
-                  <span>₹{bookingFee}</span>
+                  <span>Sample Convenience Fee (₹28/ticket)</span>
+                  <span>₹{convenienceFee}</span>
                 </div>
 
                 <div className="breakdown-divider" />
 
                 <div className="breakdown-row total-row">
                   <strong>Total Amount Payable</strong>
-                  <strong className="final-price-text">₹{grandTotal}</strong>
+                  <strong className="final-price-text">₹{totalAmount}</strong>
                 </div>
               </div>
 
-              {/* Milestone 3 Completion Notice */}
-              <div className="milestone-done-card">
-                <span className="milestone-star">⭐</span>
-                <div>
-                  <h4>Milestone 3 Successfully Completed!</h4>
-                  <p>
-                    Your selected movie, showtime, and interactive seats (<strong>{selectedSeats.join(', ')}</strong>)
-                    are securely tracked in React state and dynamically calculated.
-                  </p>
-                  <p className="milestone-next-preview">
-                    Payment Gateway & Confirmation Tickets will be built in Milestone 4.
-                  </p>
+              {/* SIMULATED PAYMENT FORM */}
+              <div className="mock-payment-section">
+                <div className="mock-payment-header">
+                  <h3 className="payment-title">Simulated Payment Gateway</h3>
+                  <span className="sandbox-badge">TEST SANDBOX • NO REAL MONEY</span>
                 </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="summary-actions-row">
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-lg"
-                  onClick={onBackToSeats}
-                >
-                  ← Edit Seats
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-lg"
-                  onClick={onBackToListing}
-                >
-                  Browse More Movies
-                </button>
+                <p className="mock-disclaimer-note">
+                  🔒 This is a simulated frontend demo for Milestone 4. No real bank accounts or credit cards will be charged.
+                </p>
+
+                {/* Payment Method Tabs */}
+                <div className="payment-methods-tabs" role="tablist" aria-label="Mock Payment Methods">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={paymentMethod === 'upi'}
+                    className={`pay-tab-btn ${paymentMethod === 'upi' ? 'active' : ''}`}
+                    onClick={() => setPaymentMethod('upi')}
+                    disabled={isProcessing}
+                  >
+                    ⚡ UPI / QR
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={paymentMethod === 'card'}
+                    className={`pay-tab-btn ${paymentMethod === 'card' ? 'active' : ''}`}
+                    onClick={() => setPaymentMethod('card')}
+                    disabled={isProcessing}
+                  >
+                    💳 Card
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={paymentMethod === 'netbanking'}
+                    className={`pay-tab-btn ${paymentMethod === 'netbanking' ? 'active' : ''}`}
+                    onClick={() => setPaymentMethod('netbanking')}
+                    disabled={isProcessing}
+                  >
+                    🏦 NetBanking
+                  </button>
+                </div>
+
+                {/* Method Form Inputs */}
+                <div className="mock-input-container">
+                  {paymentMethod === 'upi' && (
+                    <div className="mock-field-group">
+                      <label className="field-label" htmlFor="mock-upi-input">Mock UPI ID / VPA</label>
+                      <input
+                        id="mock-upi-input"
+                        type="text"
+                        value={upiId}
+                        onChange={(e) => setUpiId(e.target.value)}
+                        className="mock-text-input"
+                        placeholder="username@okhdfcbank"
+                        disabled={isProcessing}
+                      />
+                      <span className="field-helper">Sample mock address automatically populated</span>
+                    </div>
+                  )}
+
+                  {paymentMethod === 'card' && (
+                    <div className="mock-card-fields">
+                      <div className="mock-field-group">
+                        <label className="field-label" htmlFor="mock-card-num">Card Number (Simulated)</label>
+                        <input
+                          id="mock-card-num"
+                          type="text"
+                          value={cardNumber}
+                          onChange={(e) => setCardNumber(e.target.value)}
+                          className="mock-text-input"
+                          disabled={isProcessing}
+                        />
+                      </div>
+                      <div className="card-dual-row">
+                        <div className="mock-field-group">
+                          <label className="field-label" htmlFor="mock-expiry">Expiry</label>
+                          <input
+                            id="mock-expiry"
+                            type="text"
+                            value={cardExpiry}
+                            onChange={(e) => setCardExpiry(e.target.value)}
+                            className="mock-text-input"
+                            disabled={isProcessing}
+                          />
+                        </div>
+                        <div className="mock-field-group">
+                          <label className="field-label" htmlFor="mock-cvv">CVV</label>
+                          <input
+                            id="mock-cvv"
+                            type="password"
+                            value={cardCvv}
+                            onChange={(e) => setCardCvv(e.target.value)}
+                            className="mock-text-input"
+                            maxLength={3}
+                            disabled={isProcessing}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {paymentMethod === 'netbanking' && (
+                    <div className="mock-field-group">
+                      <label className="field-label" htmlFor="mock-bank-select">Select Bank</label>
+                      <select
+                        id="mock-bank-select"
+                        value={selectedBank}
+                        onChange={(e) => setSelectedBank(e.target.value)}
+                        className="mock-select-input"
+                        disabled={isProcessing}
+                      >
+                        <option value="HDFC Bank">HDFC Bank</option>
+                        <option value="State Bank of India">State Bank of India</option>
+                        <option value="ICICI Bank">ICICI Bank</option>
+                        <option value="Axis Bank">Axis Bank</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Simulation Mode Toggle (For Testing Success vs Failure) */}
+                <div className="simulation-mode-selector">
+                  <span className="sim-mode-title">Test Simulation Outcome:</span>
+                  <div className="sim-radio-options">
+                    <label className={`sim-radio-label ${simulationMode === 'success' ? 'selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="simOutcome"
+                        value="success"
+                        checked={simulationMode === 'success'}
+                        onChange={() => {
+                          setSimulationMode('success');
+                          setPaymentError(null);
+                        }}
+                        disabled={isProcessing}
+                      />
+                      <span>✅ Simulate Success</span>
+                    </label>
+
+                    <label className={`sim-radio-label ${simulationMode === 'failure' ? 'selected' : ''}`}>
+                      <input
+                        type="radio"
+                        name="simOutcome"
+                        value="failure"
+                        checked={simulationMode === 'failure'}
+                        onChange={() => setSimulationMode('failure')}
+                        disabled={isProcessing}
+                      />
+                      <span>❌ Simulate Failure</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Error Banner on Simulated Failure */}
+                {paymentError && (
+                  <div className="payment-error-alert" role="alert">
+                    <div className="error-icon">✕</div>
+                    <div className="error-content">
+                      <strong>Payment Failed:</strong>
+                      <p>{paymentError}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Payment Submit Buttons */}
+                <div className="payment-actions-row">
+                  <button
+                    type="button"
+                    disabled={!hasValidSeats || isProcessing}
+                    className="btn btn-primary btn-lg pay-submit-btn"
+                    onClick={() => handleExecutePayment()}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <span className="loading-spinner" />
+                        <span>Processing Secure Payment...</span>
+                      </>
+                    ) : (
+                      <span>
+                        {simulationMode === 'success' ? '🔒 Pay & Confirm' : '⚠️ Test Simulated Failure'} (₹{totalAmount})
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Immediate Shortcut Buttons to directly test success or failure */}
+                  <div className="test-action-buttons">
+                    <button
+                      type="button"
+                      disabled={!hasValidSeats || isProcessing}
+                      className="btn btn-outline test-btn test-success-btn"
+                      onClick={() => handleExecutePayment('success')}
+                      title="Directly test simulated success outcome"
+                    >
+                      ✓ Quick Test: Success
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!hasValidSeats || isProcessing}
+                      className="btn btn-outline test-btn test-fail-btn"
+                      onClick={() => handleExecutePayment('failure')}
+                      title="Directly test simulated decline outcome"
+                    >
+                      ✕ Quick Test: Fail
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

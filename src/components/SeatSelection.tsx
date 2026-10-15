@@ -1,51 +1,32 @@
-import { useState } from 'react';
 import type { BookingSelection } from '../types/booking';
 import { INITIAL_SEAT_LAYOUT } from '../data/seats';
 
 interface SeatSelectionProps {
   booking: BookingSelection;
+  selectedSeats: string[];
+  onToggleSeat: (seatId: string) => void;
   onBackToShowtimes: () => void;
-  onProceedToSummary: (selectedSeats: string[], totalPrice: number) => void;
+  onProceedToSummary: () => void;
 }
 
 export const SeatSelection = ({
   booking,
+  selectedSeats,
+  onToggleSeat,
   onBackToShowtimes,
   onProceedToSummary,
 }: SeatSelectionProps) => {
   const { movie, date, theater, showtime } = booking;
 
-  // React State: Array of selected seat IDs (e.g. ['A1', 'A2'])
-  const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
-
-  // Derived Values calculated directly from state and props:
-  const seatCount = selectedSeatIds.length;
+  // Derived Values calculated directly from props:
+  const seatCount = selectedSeats.length;
   const pricePerSeat = showtime.price;
   const totalPrice = seatCount * pricePerSeat;
 
-  // Event Handler: Toggle seat selection
-  const handleToggleSeat = (seatId: string, isUnavailable: boolean) => {
-    // 1. Guard clause: Prevent clicking unavailable seats
-    if (isUnavailable) {
-      return;
-    }
-
-    // 2. State update using functional update pattern:
-    setSelectedSeatIds((prevSelected) => {
-      if (prevSelected.includes(seatId)) {
-        // Deselect: filter out the seat ID from the array
-        return prevSelected.filter((id) => id !== seatId);
-      } else {
-        // Select: append the new seat ID to the array
-        return [...prevSelected, seatId];
-      }
-    });
-  };
-
-  // Handler: Proceed to booking summary
+  // Guard: Proceed only if at least one seat is selected
   const handleContinue = () => {
     if (seatCount === 0) return;
-    onProceedToSummary(selectedSeatIds, totalPrice);
+    onProceedToSummary();
   };
 
   return (
@@ -104,7 +85,7 @@ export const SeatSelection = ({
                 {/* Left Wing Seats (Seats 1 to 5) */}
                 <div className="seat-wing left-wing">
                   {seatRow.seats.slice(0, 5).map((seat) => {
-                    const isSelected = selectedSeatIds.includes(seat.id);
+                    const isSelected = selectedSeats.includes(seat.id);
                     const seatStatusClass = seat.isUnavailable
                       ? 'seat-unavailable'
                       : isSelected
@@ -119,7 +100,11 @@ export const SeatSelection = ({
                         aria-pressed={isSelected}
                         aria-label={`Seat ${seat.id}, ${seat.isUnavailable ? 'Unavailable' : isSelected ? 'Selected' : 'Available'}`}
                         className={`interactive-seat-btn ${seatStatusClass}`}
-                        onClick={() => handleToggleSeat(seat.id, seat.isUnavailable)}
+                        onClick={() => {
+                          if (!seat.isUnavailable) {
+                            onToggleSeat(seat.id);
+                          }
+                        }}
                       >
                         <span className="seat-id-label">{seat.number}</span>
                       </button>
@@ -135,7 +120,7 @@ export const SeatSelection = ({
                 {/* Right Wing Seats (Seats 6 to 10) */}
                 <div className="seat-wing right-wing">
                   {seatRow.seats.slice(5, 10).map((seat) => {
-                    const isSelected = selectedSeatIds.includes(seat.id);
+                    const isSelected = selectedSeats.includes(seat.id);
                     const seatStatusClass = seat.isUnavailable
                       ? 'seat-unavailable'
                       : isSelected
@@ -150,7 +135,11 @@ export const SeatSelection = ({
                         aria-pressed={isSelected}
                         aria-label={`Seat ${seat.id}, ${seat.isUnavailable ? 'Unavailable' : isSelected ? 'Selected' : 'Available'}`}
                         className={`interactive-seat-btn ${seatStatusClass}`}
-                        onClick={() => handleToggleSeat(seat.id, seat.isUnavailable)}
+                        onClick={() => {
+                          if (!seat.isUnavailable) {
+                            onToggleSeat(seat.id);
+                          }
+                        }}
                       >
                         <span className="seat-id-label">{seat.number}</span>
                       </button>
@@ -182,7 +171,7 @@ export const SeatSelection = ({
                     {seatCount} {seatCount === 1 ? 'Seat' : 'Seats'} Selected:
                   </span>
                   <div className="seat-id-chips">
-                    {selectedSeatIds.map((id) => (
+                    {selectedSeats.map((id) => (
                       <span key={id} className="seat-chip">
                         {id}
                       </span>

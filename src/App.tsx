@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { Movie } from './types/movie';
-import type { BookingSelection, ConfirmedBooking } from './types/booking';
+import type { BookingSelection, BookingConfirmation } from './types/booking';
 import { MOVIES_DATA } from './data/movies';
 import { Navbar } from './components/Navbar';
 import { FeaturedMovie } from './components/FeaturedMovie';
@@ -9,12 +9,13 @@ import { CinemaPerks } from './components/CinemaPerks';
 import { ShowtimeSelection } from './components/ShowtimeSelection';
 import { SeatSelection } from './components/SeatSelection';
 import { BookingSummary } from './components/BookingSummary';
+import { BookingConfirmationView } from './components/BookingConfirmationView';
 import { TrailerModal } from './components/TrailerModal';
 import { Footer } from './components/Footer';
 import './App.css';
 
-// The 4 main views in our application
-type AppView = 'LISTING' | 'SHOWTIMES' | 'SEAT_SELECTION' | 'BOOKING_SUMMARY';
+// The 5 views in our booking workflow
+type AppView = 'LISTING' | 'SHOWTIMES' | 'SEAT_SELECTION' | 'BOOKING_SUMMARY' | 'CONFIRMATION';
 
 function App() {
   // Navigation & View State
@@ -23,7 +24,8 @@ function App() {
   // Booking Data States
   const [selectedMovieForBooking, setSelectedMovieForBooking] = useState<Movie | null>(null);
   const [activeBookingSelection, setActiveBookingSelection] = useState<BookingSelection | null>(null);
-  const [confirmedBooking, setConfirmedBooking] = useState<ConfirmedBooking | null>(null);
+  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [activeConfirmation, setActiveConfirmation] = useState<BookingConfirmation | null>(null);
 
   // Search, City & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -95,6 +97,7 @@ function App() {
   // Handler: When user clicks "Book Tickets" on any movie
   const handleStartBooking = (movie: Movie) => {
     setSelectedMovieForBooking(movie);
+    setSelectedSeats([]); // reset seats for fresh booking
     setCurrentView('SHOWTIMES');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -112,6 +115,15 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Handler: Toggle a seat in the lifted selectedSeats state
+  const handleToggleSeat = (seatId: string) => {
+    setSelectedSeats((prev) =>
+      prev.includes(seatId)
+        ? prev.filter((id) => id !== seatId) // Deselect
+        : [...prev, seatId] // Select
+    );
+  };
+
   // Handler: From seat selection, go back to change showtime
   const handleBackToShowtimes = () => {
     setCurrentView('SHOWTIMES');
@@ -119,21 +131,31 @@ function App() {
   };
 
   // Handler: User confirms seat choices and proceeds to summary
-  const handleProceedToSummary = (selectedSeats: string[], totalPrice: number) => {
-    if (!activeBookingSelection) return;
-    setConfirmedBooking({
-      selection: activeBookingSelection,
-      selectedSeats,
-      pricePerSeat: activeBookingSelection.showtime.price,
-      totalPrice,
-    });
+  const handleProceedToSummary = () => {
     setCurrentView('BOOKING_SUMMARY');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Handler: From summary, go back to edit seats
+  // Handler: From summary, go back to edit seats (preserving selections)
   const handleBackToSeats = () => {
     setCurrentView('SEAT_SELECTION');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handler: Simulated payment success
+  const handlePaymentSuccess = (confirmation: BookingConfirmation) => {
+    setActiveConfirmation(confirmation);
+    setCurrentView('CONFIRMATION');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handler: Start another booking / return to listing
+  const handleBookAnother = () => {
+    setSelectedMovieForBooking(null);
+    setActiveBookingSelection(null);
+    setSelectedSeats([]);
+    setActiveConfirmation(null);
+    setCurrentView('LISTING');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -195,21 +217,32 @@ function App() {
           />
         )}
 
-        {/* VIEW 3: Interactive Seat Selection (Milestone 3) */}
+        {/* VIEW 3: Interactive Seat Selection */}
         {currentView === 'SEAT_SELECTION' && activeBookingSelection && (
           <SeatSelection
             booking={activeBookingSelection}
+            selectedSeats={selectedSeats}
+            onToggleSeat={handleToggleSeat}
             onBackToShowtimes={handleBackToShowtimes}
             onProceedToSummary={handleProceedToSummary}
           />
         )}
 
-        {/* VIEW 4: Booking Summary Preview (Milestone 3) */}
-        {currentView === 'BOOKING_SUMMARY' && confirmedBooking && (
+        {/* VIEW 4: Booking Summary & Mock Payment Gateway (Milestone 4) */}
+        {currentView === 'BOOKING_SUMMARY' && activeBookingSelection && (
           <BookingSummary
-            confirmedBooking={confirmedBooking}
+            selection={activeBookingSelection}
+            selectedSeats={selectedSeats}
             onBackToSeats={handleBackToSeats}
-            onBackToListing={handleBackToListing}
+            onPaymentSuccess={handlePaymentSuccess}
+          />
+        )}
+
+        {/* VIEW 5: Digital Ticket Confirmation (Milestone 4) */}
+        {currentView === 'CONFIRMATION' && activeConfirmation && (
+          <BookingConfirmationView
+            confirmation={activeConfirmation}
+            onBookAnother={handleBookAnother}
           />
         )}
       </main>

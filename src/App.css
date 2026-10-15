@@ -3202,4 +3202,703 @@
   }
 }
 
+/* ==========================================================================
+   Milestone 4: Simulated Payment & Confirmation View Styles
+   ========================================================================== */
+
+/* Empty Seats Alert Banner */
+.empty-seats-alert {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  color: #ffffff;
+  flex-wrap: wrap;
+}
+
+.empty-seats-alert .alert-icon {
+  font-size: 1.6rem;
+}
+
+.empty-seats-alert .btn {
+  margin-left: auto;
+}
+
+/* Mock Payment Section inside BookingSummary */
+.mock-payment-section {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.mock-payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.payment-title {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-white);
+}
+
+.sandbox-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+}
+
+.mock-disclaimer-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  border-left: 2px solid var(--accent-red);
+  padding-left: 10px;
+}
+
+/* Payment Method Tabs */
+.payment-methods-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.pay-tab-btn {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pay-tab-btn:hover:not(:disabled) {
+  background-color: var(--bg-card-hover);
+  color: var(--text-white);
+}
+
+.pay-tab-btn.active {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: var(--accent-red);
+  color: #ffffff;
+  box-shadow: 0 0 12px var(--accent-red-glow);
+}
+
+/* Inputs */
+.mock-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mock-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.mock-text-input,
+.mock-select-input {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-xs);
+  color: var(--text-white);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 10px 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.mock-text-input:focus,
+.mock-select-input:focus {
+  border-color: var(--accent-red);
+  box-shadow: 0 0 0 3px var(--accent-red-glow);
+}
+
+.field-helper {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.card-dual-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Simulation Mode Radio Selector */
+.simulation-mode-selector {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sim-mode-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.sim-radio-options {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sim-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.sim-radio-label.selected {
+  color: var(--text-white);
+  background-color: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-glass);
+}
+
+.sim-radio-label input[type="radio"] {
+  accent-color: var(--accent-red);
+  cursor: pointer;
+}
+
+/* Payment Error Alert */
+.payment-error-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  color: #ffffff;
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+.error-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.error-content strong {
+  display: block;
+  font-size: 0.9rem;
+  color: #f87171;
+  margin-bottom: 2px;
+}
+
+.error-content p {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+/* Pay Buttons */
+.payment-actions-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pay-submit-btn {
+  width: 100%;
+  font-family: var(--font-heading);
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  position: relative;
+}
+
+.loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.test-action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.test-btn {
+  font-size: 0.78rem;
+  padding: 8px;
+}
+
+.test-success-btn:hover {
+  border-color: var(--accent-emerald);
+  color: var(--accent-emerald);
+}
+
+.test-fail-btn:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* ==========================================================================
+   Milestone 4: Booking Confirmation & Digital E-Ticket View
+   ========================================================================== */
+.confirmation-page-container {
+  min-height: calc(100vh - 80px);
+  padding: 40px 24px 80px;
+  background-color: var(--bg-dark);
+}
+
+.confirmation-card-wrapper {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Success Banner */
+.confirmation-success-banner {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.success-icon-badge {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-size: 2.2rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.45);
+  margin-bottom: 16px;
+  animation: modalScaleUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.success-tag {
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--accent-emerald);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.success-title {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-white);
+  margin-bottom: 8px;
+}
+
+.success-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+}
+
+/* Digital Ticket Pass */
+.digital-ticket-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg), 0 0 40px rgba(0, 0, 0, 0.8);
+  position: relative;
+}
+
+.ticket-top-brand {
+  background: linear-gradient(135deg, #191e36 0%, #0f1222 100%);
+  border-bottom: 1px solid var(--border-glass);
+  padding: 18px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ticket-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ticket-brand-text {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: var(--text-white);
+}
+
+.ticket-ref-box {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.ref-title {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.ref-code {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--accent-red);
+}
+
+.ticket-content-split {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  position: relative;
+}
+
+.ticket-main-info {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.ticket-movie-header {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.ticket-film-poster {
+  width: 72px;
+  height: 105px;
+  object-fit: cover;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-glass);
+  flex-shrink: 0;
+}
+
+.ticket-film-title {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-white);
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.ticket-film-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.format-badge {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: var(--accent-cyan);
+}
+
+.ticket-details-matrix {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.detail-value {
+  font-size: 1rem;
+  color: var(--text-white);
+}
+
+.detail-sub {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* Perforated Stub Section with QR */
+.ticket-stub-section {
+  background-color: var(--bg-secondary);
+  border-left: 2px dashed rgba(255, 255, 255, 0.15);
+  padding: 30px 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.perforated-notch {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background-color: var(--bg-dark);
+  border-radius: 50%;
+  left: -13px;
+  z-index: 10;
+}
+
+.top-notch {
+  top: -12px;
+}
+
+.bottom-notch {
+  bottom: -12px;
+}
+
+.stub-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 18px;
+}
+
+/* Simulated QR Code Box */
+.qr-code-box {
+  width: 140px;
+  height: 140px;
+  background: #ffffff;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: var(--shadow-sm);
+}
+
+.qr-simulated-pattern {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  background: #000000;
+}
+
+.qr-corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: #ffffff;
+}
+
+.qr-corner::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  background: #000000;
+}
+
+.qr-corner.top-left { top: 3px; left: 3px; }
+.qr-corner.top-right { top: 3px; right: 3px; }
+.qr-corner.bottom-left { bottom: 3px; left: 3px; }
+
+.qr-dots-grid {
+  position: absolute;
+  inset: 12px;
+  background: repeating-linear-gradient(
+    45deg,
+    #ffffff,
+    #ffffff 4px,
+    #000000 4px,
+    #000000 8px
+  );
+  opacity: 0.9;
+}
+
+.qr-caption {
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #000000;
+}
+
+.stub-payment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stub-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.stub-price {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+
+.stub-method {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.stub-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.ticket-bottom-security {
+  background-color: #0c0f1c;
+  border-top: 1px solid var(--border-glass);
+  padding: 10px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--accent-emerald);
+  font-weight: 600;
+}
+
+/* Demo Notice */
+.milestone-demo-notice {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+}
+
+.milestone-demo-notice .notice-icon {
+  font-size: 1.8rem;
+}
+
+.milestone-demo-notice h4 {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  margin-bottom: 2px;
+}
+
+.milestone-demo-notice p {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Action Buttons */
+.confirmation-action-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.confirmation-action-buttons .btn {
+  min-width: 220px;
+}
+
+@media (max-width: 768px) {
+  .ticket-content-split {
+    grid-template-columns: 1fr;
+  }
+  .ticket-stub-section {
+    border-left: none;
+    border-top: 2px dashed rgba(255, 255, 255, 0.15);
+  }
+  .perforated-notch {
+    display: none;
+  }
+  .ticket-details-matrix {
+    grid-template-columns: 1fr;
+  }
+  .ticket-movie-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  .ticket-film-badges {
+    justify-content: center;
+  }
+  .payment-methods-tabs {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 
