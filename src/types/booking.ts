@@ -5,7 +5,7 @@ export interface ShowDate {
   label: string; // e.g. "Today", "Tomorrow", "Sat"
   day: string; // e.g. "15"
   month: string; // e.g. "Oct"
-  fullDate: string; // e.g. "Wednesday, 15 Oct 2026"
+  fullDate: string; // e.g. "Thursday, 15 Oct 2026"
 }
 
 export interface Showtime {
@@ -29,4 +29,26 @@ export interface BookingSelection {
   date: ShowDate;
   theater: Theater;
   showtime: Showtime;
+}
+
+export type SeatStatus = 'available' | 'selected' | 'unavailable';
+
+export interface Seat {
+  id: string; // e.g. "A1", "C5"
+  row: string; // e.g. "A"
+  number: number; // e.g. 1
+  isUnavailable: boolean;
+}
+
+export interface SeatRow {
+  row: string;
+  seats: Seat[];
+  category: 'Classic' | 'Prime' | 'Recliner';
+}
+
+export interface ConfirmedBooking {
+  selection: BookingSelection;
+  selectedSeats: string[];
+  pricePerSeat: number;
+  totalPrice: number;
 }

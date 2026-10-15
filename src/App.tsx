@@ -1,27 +1,29 @@
 import { useState, useMemo } from 'react';
 import type { Movie } from './types/movie';
-import type { BookingSelection } from './types/booking';
+import type { BookingSelection, ConfirmedBooking } from './types/booking';
 import { MOVIES_DATA } from './data/movies';
 import { Navbar } from './components/Navbar';
 import { FeaturedMovie } from './components/FeaturedMovie';
 import { MovieGrid } from './components/MovieGrid';
 import { CinemaPerks } from './components/CinemaPerks';
 import { ShowtimeSelection } from './components/ShowtimeSelection';
-import { SeatSelectionPlaceholder } from './components/SeatSelectionPlaceholder';
+import { SeatSelection } from './components/SeatSelection';
+import { BookingSummary } from './components/BookingSummary';
 import { TrailerModal } from './components/TrailerModal';
 import { Footer } from './components/Footer';
 import './App.css';
 
-// The 3 views in our application
-type AppView = 'LISTING' | 'SHOWTIMES' | 'SEAT_SELECTION';
+// The 4 main views in our application
+type AppView = 'LISTING' | 'SHOWTIMES' | 'SEAT_SELECTION' | 'BOOKING_SUMMARY';
 
 function App() {
   // Navigation & View State
   const [currentView, setCurrentView] = useState<AppView>('LISTING');
 
-  // Movie & Booking Selection State
+  // Booking Data States
   const [selectedMovieForBooking, setSelectedMovieForBooking] = useState<Movie | null>(null);
   const [activeBookingSelection, setActiveBookingSelection] = useState<BookingSelection | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<ConfirmedBooking | null>(null);
 
   // Search, City & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,7 +32,7 @@ function App() {
   const [selectedFormat, setSelectedFormat] = useState('All Formats');
   const [sortBy, setSortBy] = useState('featured');
 
-  // Featured movies for hero banner
+  // Featured movies for marquee
   const featuredList = useMemo(() => {
     return MOVIES_DATA.filter((m) => m.isFeatured);
   }, []);
@@ -116,6 +118,25 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Handler: User confirms seat choices and proceeds to summary
+  const handleProceedToSummary = (selectedSeats: string[], totalPrice: number) => {
+    if (!activeBookingSelection) return;
+    setConfirmedBooking({
+      selection: activeBookingSelection,
+      selectedSeats,
+      pricePerSeat: activeBookingSelection.showtime.price,
+      totalPrice,
+    });
+    setCurrentView('BOOKING_SUMMARY');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handler: From summary, go back to edit seats
+  const handleBackToSeats = () => {
+    setCurrentView('SEAT_SELECTION');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleResetFilters = () => {
     setSelectedGenre('All');
     setSelectedFormat('All Formats');
@@ -134,7 +155,7 @@ function App() {
       />
 
       <main className="main-content">
-        {/* CONDITIONAL RENDERING VIEW 1: Movie Listing Homepage */}
+        {/* VIEW 1: Movie Listing Homepage */}
         {currentView === 'LISTING' && (
           <>
             <FeaturedMovie
@@ -164,7 +185,7 @@ function App() {
           </>
         )}
 
-        {/* CONDITIONAL RENDERING VIEW 2: Movie Details & Showtime Selection */}
+        {/* VIEW 2: Movie Details & Showtime Selection */}
         {currentView === 'SHOWTIMES' && selectedMovieForBooking && (
           <ShowtimeSelection
             movie={selectedMovieForBooking}
@@ -174,11 +195,20 @@ function App() {
           />
         )}
 
-        {/* CONDITIONAL RENDERING VIEW 3: Seat Selection Placeholder */}
+        {/* VIEW 3: Interactive Seat Selection (Milestone 3) */}
         {currentView === 'SEAT_SELECTION' && activeBookingSelection && (
-          <SeatSelectionPlaceholder
+          <SeatSelection
             booking={activeBookingSelection}
             onBackToShowtimes={handleBackToShowtimes}
+            onProceedToSummary={handleProceedToSummary}
+          />
+        )}
+
+        {/* VIEW 4: Booking Summary Preview (Milestone 3) */}
+        {currentView === 'BOOKING_SUMMARY' && confirmedBooking && (
+          <BookingSummary
+            confirmedBooking={confirmedBooking}
+            onBackToSeats={handleBackToSeats}
             onBackToListing={handleBackToListing}
           />
         )}
