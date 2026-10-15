@@ -303,7 +303,7 @@ function App() {
                   <h3>Failed to Load Movies from Backend</h3>
                   <p className="error-detail">{fetchError}</p>
                   <p className="error-hint">
-                    Check that the FastAPI server is running on <code>http://localhost:8000</code>.
+                    Check that the backend server is running and reachable.
                   </p>
                 </div>
                 <button
