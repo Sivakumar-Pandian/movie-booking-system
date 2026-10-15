@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Movie } from './types/movie';
 import type { BookingSelection, BookingConfirmation } from './types/booking';
-import { MOVIES_DATA } from './data/movies';
+import { fetchMoviesFromApi } from './services/movieApi';
 import { Navbar } from './components/Navbar';
 import { FeaturedMovie } from './components/FeaturedMovie';
 import { MovieGrid } from './components/MovieGrid';
@@ -21,6 +21,11 @@ function App() {
   // Navigation & View State
   const [currentView, setCurrentView] = useState<AppView>('LISTING');
 
+  // Backend Live Movie Data States
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
   // Booking Data States
   const [selectedMovieForBooking, setSelectedMovieForBooking] = useState<Movie | null>(null);
   const [activeBookingSelection, setActiveBookingSelection] = useState<BookingSelection | null>(null);
@@ -34,28 +39,83 @@ function App() {
   const [selectedFormat, setSelectedFormat] = useState('All Formats');
   const [sortBy, setSortBy] = useState('featured');
 
-  // Featured movies for marquee
-  const featuredList = useMemo(() => {
-    return MOVIES_DATA.filter((m) => m.isFeatured);
-  }, []);
-
-  const [activeFeaturedMovie, setActiveFeaturedMovie] = useState<Movie>(() => {
-    return featuredList[0] ?? MOVIES_DATA[0];
-  });
-
   // Modal State for Video Trailers
   const [trailerMovie, setTrailerMovie] = useState<Movie | null>(null);
 
-  // Computed Genre & Format list
+  // Fetch movies on initial mount
+  useEffect(() => {
+    let isMounted = true;
+
+    fetchMoviesFromApi()
+      .then((data) => {
+        if (isMounted) {
+          setMovies(data);
+          setIsLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (isMounted) {
+          const message =
+            err instanceof Error
+              ? err.message
+              : 'Unable to connect to the backend server. Please verify FastAPI is running.';
+          setFetchError(message);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Explicit user-triggered retry
+  const handleRetry = () => {
+    setIsLoading(true);
+    setFetchError(null);
+
+    fetchMoviesFromApi()
+      .then((data) => {
+        setMovies(data);
+        setIsLoading(false);
+      })
+      .catch((err: unknown) => {
+        const message =
+          err instanceof Error
+            ? err.message
+            : 'Unable to connect to the backend server. Please verify FastAPI is running.';
+        setFetchError(message);
+        setIsLoading(false);
+      });
+  };
+
+  // Featured movies derived from live backend data
+  const featuredList = useMemo(() => {
+    const featured = movies.filter((m) => m.isFeatured);
+    return featured.length > 0 ? featured : movies;
+  }, [movies]);
+
+  // Active movie for hero banner
+  const [selectedFeaturedId, setSelectedFeaturedId] = useState<string | null>(null);
+
+  const activeFeaturedMovie = useMemo(() => {
+    if (selectedFeaturedId) {
+      const found = featuredList.find((m) => m.id === selectedFeaturedId);
+      if (found) return found;
+    }
+    return featuredList[0] ?? null;
+  }, [featuredList, selectedFeaturedId]);
+
+  // Computed Genre & Format list derived from fetched movies
   const availableGenres = useMemo(() => {
     const genreSet = new Set<string>();
-    for (const movie of MOVIES_DATA) {
+    for (const movie of movies) {
       for (const g of movie.genre) {
         genreSet.add(g);
       }
     }
     return ['All', ...Array.from(genreSet)];
-  }, []);
+  }, [movies]);
 
   const availableFormats = useMemo(() => {
     return ['All Formats', 'IMAX 3D', '4DX', 'Dolby Cinema', '2D'];
@@ -63,7 +123,7 @@ function App() {
 
   // Filtered & Sorted Movie List
   const displayedMovies = useMemo(() => {
-    const result = MOVIES_DATA.filter((movie) => {
+    const result = movies.filter((movie) => {
       const matchesGenre =
         selectedGenre === 'All' || movie.genre.includes(selectedGenre);
 
@@ -92,7 +152,7 @@ function App() {
     }
 
     return result;
-  }, [selectedGenre, selectedFormat, searchQuery, sortBy]);
+  }, [movies, selectedGenre, selectedFormat, searchQuery, sortBy]);
 
   // Handler: When user clicks "Book Tickets" on any movie
   const handleStartBooking = (movie: Movie) => {
@@ -177,33 +237,90 @@ function App() {
       />
 
       <main className="main-content">
-        {/* VIEW 1: Movie Listing Homepage */}
+        {/* VIEW 1: Movie Listing Homepage with Live API Data */}
         {currentView === 'LISTING' && (
           <>
-            <FeaturedMovie
-              featuredMovies={featuredList}
-              activeMovie={activeFeaturedMovie}
-              onSelectMovie={setActiveFeaturedMovie}
-              onBookTickets={handleStartBooking}
-              onWatchTrailer={(movie) => setTrailerMovie(movie)}
-            />
+            {/* Case A: Loading State */}
+            {isLoading && (
+              <div className="api-status-banner api-loading-banner" role="status">
+                <span className="api-spinner" />
+                <div className="status-text-wrap">
+                  <h3>Connecting to Yozigo FastAPI Backend...</h3>
+                  <p>Fetching the latest movie listings from <code>/api/movies</code></p>
+                </div>
+              </div>
+            )}
 
-            <CinemaPerks />
+            {/* Case B: Error State with Retry Button */}
+            {!isLoading && fetchError && (
+              <div className="api-status-banner api-error-banner" role="alert">
+                <span className="status-icon">⚠️</span>
+                <div className="status-text-wrap">
+                  <h3>Failed to Load Movies from Backend</h3>
+                  <p className="error-detail">{fetchError}</p>
+                  <p className="error-hint">
+                    Check that the FastAPI server is running on <code>http://localhost:8000</code>.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-primary retry-btn"
+                  onClick={handleRetry}
+                >
+                  ↻ Retry Connection
+                </button>
+              </div>
+            )}
 
-            <MovieGrid
-              movies={displayedMovies}
-              selectedGenre={selectedGenre}
-              onSelectGenre={setSelectedGenre}
-              availableGenres={availableGenres}
-              selectedFormat={selectedFormat}
-              onSelectFormat={setSelectedFormat}
-              availableFormats={availableFormats}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              onBookTickets={handleStartBooking}
-              onWatchTrailer={(movie) => setTrailerMovie(movie)}
-              onResetFilters={handleResetFilters}
-            />
+            {/* Case C: Empty Movies List */}
+            {!isLoading && !fetchError && movies.length === 0 && (
+              <div className="api-status-banner api-empty-banner" role="status">
+                <span className="status-icon">🎬</span>
+                <div className="status-text-wrap">
+                  <h3>No Movies in Catalog</h3>
+                  <p>The backend endpoint returned an empty list of movies.</p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleRetry}
+                >
+                  Refresh
+                </button>
+              </div>
+            )}
+
+            {/* Case D: Loaded Movies Successfully */}
+            {!isLoading && !fetchError && movies.length > 0 && (
+              <>
+                {activeFeaturedMovie && (
+                  <FeaturedMovie
+                    featuredMovies={featuredList}
+                    activeMovie={activeFeaturedMovie}
+                    onSelectMovie={(movie) => setSelectedFeaturedId(movie.id)}
+                    onBookTickets={handleStartBooking}
+                    onWatchTrailer={(movie) => setTrailerMovie(movie)}
+                  />
+                )}
+
+                <CinemaPerks />
+
+                <MovieGrid
+                  movies={displayedMovies}
+                  selectedGenre={selectedGenre}
+                  onSelectGenre={setSelectedGenre}
+                  availableGenres={availableGenres}
+                  selectedFormat={selectedFormat}
+                  onSelectFormat={setSelectedFormat}
+                  availableFormats={availableFormats}
+                  sortBy={sortBy}
+                  onSortChange={setSortBy}
+                  onBookTickets={handleStartBooking}
+                  onWatchTrailer={(movie) => setTrailerMovie(movie)}
+                  onResetFilters={handleResetFilters}
+                />
+              </>
+            )}
           </>
         )}
 
@@ -228,7 +345,7 @@ function App() {
           />
         )}
 
-        {/* VIEW 4: Booking Summary & Mock Payment Gateway (Milestone 4) */}
+        {/* VIEW 4: Booking Summary & Mock Payment Gateway */}
         {currentView === 'BOOKING_SUMMARY' && activeBookingSelection && (
           <BookingSummary
             selection={activeBookingSelection}
@@ -238,7 +355,7 @@ function App() {
           />
         )}
 
-        {/* VIEW 5: Digital Ticket Confirmation (Milestone 4) */}
+        {/* VIEW 5: Digital Ticket Confirmation */}
         {currentView === 'CONFIRMATION' && activeConfirmation && (
           <BookingConfirmationView
             confirmation={activeConfirmation}

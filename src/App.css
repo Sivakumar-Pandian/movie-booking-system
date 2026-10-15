@@ -3900,5 +3900,121 @@
   }
 }
 
+/* ==========================================================================
+   Milestone 6: API Status Banners (Loading, Error, Retry)
+   ========================================================================== */
+.api-status-banner {
+  max-width: 900px;
+  margin: 60px auto;
+  padding: 32px 28px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  box-shadow: var(--shadow-md);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+.api-status-banner .status-text-wrap {
+  flex: 1;
+}
+
+.api-status-banner h3 {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-white);
+  margin-bottom: 6px;
+}
+
+.api-status-banner p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.api-status-banner code {
+  font-family: ui-monospace, Consolas, monospace;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: #ffffff;
+}
+
+/* Loading Banner */
+.api-loading-banner {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-glass);
+}
+
+.api-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(244, 63, 94, 0.2);
+  border-top-color: var(--accent-red);
+  border-radius: 50%;
+  animation: spin 0.85s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Error Banner */
+.api-error-banner {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  flex-wrap: wrap;
+}
+
+.api-error-banner .status-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.api-error-banner h3 {
+  color: #fca5a5;
+}
+
+.api-error-banner .error-detail {
+  color: #fee2e2;
+  margin-bottom: 6px;
+}
+
+.api-error-banner .error-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.retry-btn {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  padding: 12px 24px;
+  white-space: nowrap;
+}
+
+/* Empty Banner */
+.api-empty-banner {
+  background-color: var(--bg-card);
+  border: 1px dashed var(--border-glass);
+  text-align: center;
+  flex-direction: column;
+}
+
+.api-empty-banner .status-icon {
+  font-size: 3rem;
+  opacity: 0.6;
+}
+
+@media (max-width: 640px) {
+  .api-status-banner {
+    flex-direction: column;
+    text-align: center;
+    margin: 30px 16px;
+    padding: 24px;
+  }
+  .retry-btn {
+    width: 100%;
+  }
+}
+
+
 
 
