@@ -13,57 +13,88 @@ export const Navbar = ({
 }: NavbarProps) => {
   return (
     <header className="navbar">
-      <div className="navbar-container">
-        {/* Brand Logo */}
-        <div className="nav-brand">
-          <span className="brand-icon" aria-hidden="true">🎬</span>
-          <span className="brand-name">Yozigo</span>
-          <span className="brand-badge">CINEMAS</span>
-        </div>
+      {/* Top Utility Bar */}
+      <div className="navbar-top">
+        <div className="navbar-container">
+          {/* Brand Logo */}
+          <div className="nav-brand">
+            <span className="brand-logo-icon">🎟️</span>
+            <div className="brand-text-wrap">
+              <span className="brand-name">YOZIGO</span>
+              <span className="brand-sub">CINEMAS</span>
+            </div>
+          </div>
 
-        {/* Location selector */}
-        <div className="nav-location">
-          <span className="location-icon" aria-hidden="true">📍</span>
-          <select
-            value={selectedCity}
-            onChange={(e) => onCityChange(e.target.value)}
-            className="city-select"
-            aria-label="Select City"
-          >
-            <option value="Bengaluru">Bengaluru</option>
-            <option value="Mumbai">Mumbai</option>
-            <option value="Delhi-NCR">Delhi-NCR</option>
-            <option value="Hyderabad">Hyderabad</option>
-            <option value="Chennai">Chennai</option>
-          </select>
-        </div>
+          {/* Search Box */}
+          <div className="nav-search">
+            <span className="search-icon" aria-hidden="true">🔍</span>
+            <input
+              type="text"
+              placeholder="Search movies, genres, actors, or languages..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="search-input"
+              aria-label="Search movies"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className="search-clear-btn"
+                onClick={() => onSearchChange('')}
+                aria-label="Clear search query"
+              >
+                ✕
+              </button>
+            )}
+          </div>
 
-        {/* Search Input */}
-        <div className="nav-search">
-          <span className="search-icon" aria-hidden="true">🔍</span>
-          <input
-            type="search"
-            placeholder="Search movies, genres..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="search-input"
-            aria-label="Search movies"
-          />
-        </div>
+          {/* Location Picker & User Actions */}
+          <div className="nav-actions">
+            <div className="nav-location" title="Select your cinema city">
+              <span className="location-pin" aria-hidden="true">📍</span>
+              <select
+                value={selectedCity}
+                onChange={(e) => onCityChange(e.target.value)}
+                className="city-select"
+                aria-label="Select City"
+              >
+                <option value="Bengaluru">Bengaluru</option>
+                <option value="Mumbai">Mumbai</option>
+                <option value="Delhi-NCR">Delhi-NCR</option>
+                <option value="Hyderabad">Hyderabad</option>
+                <option value="Chennai">Chennai</option>
+                <option value="Kolkata">Kolkata</option>
+                <option value="Pune">Pune</option>
+              </select>
+            </div>
 
-        {/* Navigation links & action */}
-        <nav className="nav-links">
-          <a href="#movies" className="nav-link active">Movies</a>
-          <a href="#theaters" className="nav-link">Theaters</a>
-          <a href="#offers" className="nav-link">Offers</a>
-          <button
-            type="button"
-            className="btn btn-secondary nav-btn"
-            onClick={() => alert('Sign In functionality will be added in upcoming milestones!')}
-          >
-            Sign In
-          </button>
-        </nav>
+            <button
+              type="button"
+              className="btn btn-secondary nav-signin-btn"
+              onClick={() => alert('User Sign In & Profiles will be enabled in future milestones!')}
+            >
+              <span className="avatar-icon">👤</span>
+              <span>Sign In</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Secondary Category Navigation Bar */}
+      <div className="navbar-sub">
+        <div className="navbar-container sub-container">
+          <nav className="sub-nav-links">
+            <a href="#movies" className="sub-link active">Now Showing</a>
+            <a href="#movies" className="sub-link">Coming Soon</a>
+            <a href="#theaters" className="sub-link">Cinemas & IMAX</a>
+            <a href="#offers" className="sub-link">Offers & Discounts</a>
+            <a href="#giftcards" className="sub-link">Gift Cards</a>
+          </nav>
+          <div className="sub-nav-perk">
+            <span className="live-dot" />
+            <span>Over 1,200+ Live Screens Today</span>
+          </div>
+        </div>
       </div>
     </header>
   );

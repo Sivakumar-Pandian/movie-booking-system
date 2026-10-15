@@ -4,7 +4,9 @@ import { MOVIES_DATA } from './data/movies';
 import { Navbar } from './components/Navbar';
 import { FeaturedMovie } from './components/FeaturedMovie';
 import { MovieGrid } from './components/MovieGrid';
+import { CinemaPerks } from './components/CinemaPerks';
 import { BookingNoticeModal } from './components/BookingNoticeModal';
+import { TrailerModal } from './components/TrailerModal';
 import { Footer } from './components/Footer';
 import './App.css';
 
@@ -12,14 +14,23 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('Bengaluru');
   const [selectedGenre, setSelectedGenre] = useState('All');
-  const [selectedMovieForBooking, setSelectedMovieForBooking] = useState<Movie | null>(null);
+  const [selectedFormat, setSelectedFormat] = useState('All Formats');
+  const [sortBy, setSortBy] = useState('featured');
 
-  // Identify featured movie for the hero banner
-  const featuredMovie = useMemo(() => {
-    return MOVIES_DATA.find((m) => m.isFeatured) ?? MOVIES_DATA[0];
+  // Featured movies for the marquee carousel
+  const featuredList = useMemo(() => {
+    return MOVIES_DATA.filter((m) => m.isFeatured);
   }, []);
 
-  // Compute unique list of genres from movie data
+  const [activeFeaturedMovie, setActiveFeaturedMovie] = useState<Movie>(() => {
+    return featuredList[0] ?? MOVIES_DATA[0];
+  });
+
+  // Modal states
+  const [bookingMovie, setBookingMovie] = useState<Movie | null>(null);
+  const [trailerMovie, setTrailerMovie] = useState<Movie | null>(null);
+
+  // Compute unique genres
   const availableGenres = useMemo(() => {
     const genreSet = new Set<string>();
     for (const movie of MOVIES_DATA) {
@@ -30,33 +41,57 @@ function App() {
     return ['All', ...Array.from(genreSet)];
   }, []);
 
-  // Filter movies based on selected genre and search query
-  const filteredMovies = useMemo(() => {
-    return MOVIES_DATA.filter((movie) => {
+  // Formats available in modern cinemas
+  const availableFormats = useMemo(() => {
+    return ['All Formats', 'IMAX 3D', '4DX', 'Dolby Cinema', '2D'];
+  }, []);
+
+  // Filter & Sort movies
+  const displayedMovies = useMemo(() => {
+    const result = MOVIES_DATA.filter((movie) => {
+      // 1. Genre filter
       const matchesGenre =
         selectedGenre === 'All' || movie.genre.includes(selectedGenre);
 
-      const query = searchQuery.trim().toLowerCase();
+      // 2. Format filter
+      const matchesFormat =
+        selectedFormat === 'All Formats' ||
+        movie.formats.some((f) =>
+          f.toLowerCase().includes(selectedFormat.toLowerCase().replace('all formats', ''))
+        );
+
+      // 3. Search query (title, genre, cast, director, language)
+      const q = searchQuery.trim().toLowerCase();
       const matchesSearch =
-        query === '' ||
-        movie.title.toLowerCase().includes(query) ||
-        movie.genre.some((g) => g.toLowerCase().includes(query)) ||
-        movie.language.toLowerCase().includes(query);
+        q === '' ||
+        movie.title.toLowerCase().includes(q) ||
+        movie.language.toLowerCase().includes(q) ||
+        movie.genre.some((g) => g.toLowerCase().includes(q)) ||
+        (movie.director && movie.director.toLowerCase().includes(q)) ||
+        (movie.cast && movie.cast.some((actor) => actor.toLowerCase().includes(q)));
 
-      return matchesGenre && matchesSearch;
+      return matchesGenre && matchesFormat && matchesSearch;
     });
-  }, [selectedGenre, searchQuery]);
 
-  const handleBookTickets = (movie: Movie) => {
-    setSelectedMovieForBooking(movie);
-  };
+    // Sort order
+    if (sortBy === 'rating') {
+      result.sort((a, b) => b.rating - a.rating);
+    } else if (sortBy === 'title') {
+      result.sort((a, b) => a.title.localeCompare(b.title));
+    }
 
-  const handleCloseModal = () => {
-    setSelectedMovieForBooking(null);
+    return result;
+  }, [selectedGenre, selectedFormat, searchQuery, sortBy]);
+
+  const handleResetFilters = () => {
+    setSelectedGenre('All');
+    setSelectedFormat('All Formats');
+    setSearchQuery('');
+    setSortBy('featured');
   };
 
   return (
-    <div className="app-container">
+    <div className="yozigo-app">
       {/* 1. Header Navigation */}
       <Navbar
         searchQuery={searchQuery}
@@ -65,30 +100,51 @@ function App() {
         onCityChange={setSelectedCity}
       />
 
-      {/* 2. Featured Movie Hero Banner */}
-      <main>
+      <main className="main-content">
+        {/* 2. Cinematic Featured Hero Marquee */}
         <FeaturedMovie
-          movie={featuredMovie}
-          onBookTickets={handleBookTickets}
+          featuredMovies={featuredList}
+          activeMovie={activeFeaturedMovie}
+          onSelectMovie={setActiveFeaturedMovie}
+          onBookTickets={(movie) => setBookingMovie(movie)}
+          onWatchTrailer={(movie) => setTrailerMovie(movie)}
         />
 
-        {/* 3. Movie Grid with Genre Filters */}
+        {/* 3. Assurance & Perks Strip */}
+        <CinemaPerks />
+
+        {/* 4. Movie Catalog Grid */}
         <MovieGrid
-          movies={filteredMovies}
+          movies={displayedMovies}
           selectedGenre={selectedGenre}
           onSelectGenre={setSelectedGenre}
           availableGenres={availableGenres}
-          onBookTickets={handleBookTickets}
+          selectedFormat={selectedFormat}
+          onSelectFormat={setSelectedFormat}
+          availableFormats={availableFormats}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+          onBookTickets={(movie) => setBookingMovie(movie)}
+          onWatchTrailer={(movie) => setTrailerMovie(movie)}
+          onResetFilters={handleResetFilters}
         />
       </main>
 
-      {/* 4. Footer */}
+      {/* 5. Footer */}
       <Footer />
 
-      {/* 5. Booking Notice Modal (Frontend Feedback for Milestone 1) */}
+      {/* 6. Booking Flow Modal */}
       <BookingNoticeModal
-        movie={selectedMovieForBooking}
-        onClose={handleCloseModal}
+        movie={bookingMovie}
+        onClose={() => setBookingMovie(null)}
+        selectedCity={selectedCity}
+      />
+
+      {/* 7. Trailer Video Modal */}
+      <TrailerModal
+        movie={trailerMovie}
+        onClose={() => setTrailerMovie(null)}
+        onBookTickets={(movie) => setBookingMovie(movie)}
       />
     </div>
   );

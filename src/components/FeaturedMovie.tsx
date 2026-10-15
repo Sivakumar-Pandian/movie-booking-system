@@ -2,68 +2,129 @@ import { useState } from 'react';
 import type { Movie } from '../types/movie';
 
 interface FeaturedMovieProps {
-  movie: Movie;
+  featuredMovies: Movie[];
+  activeMovie: Movie;
+  onSelectMovie: (movie: Movie) => void;
   onBookTickets: (movie: Movie) => void;
+  onWatchTrailer: (movie: Movie) => void;
 }
 
-export const FeaturedMovie = ({ movie, onBookTickets }: FeaturedMovieProps) => {
+export const FeaturedMovie = ({
+  featuredMovies,
+  activeMovie,
+  onSelectMovie,
+  onBookTickets,
+  onWatchTrailer,
+}: FeaturedMovieProps) => {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <section className="featured-hero" aria-label="Featured Movie">
+    <section className="featured-hero" aria-label="Featured Premiere">
+      {/* Cinematic Backdrop with Vignette */}
       <div className="hero-backdrop">
-        {!imgError && movie.backdropUrl ? (
+        {!imgError && activeMovie.backdropUrl ? (
           <img
-            src={movie.backdropUrl}
-            alt={movie.title}
+            key={activeMovie.id}
+            src={activeMovie.backdropUrl}
+            alt={activeMovie.title}
             className="hero-backdrop-img"
             onError={() => setImgError(true)}
           />
         ) : (
           <div className="hero-backdrop-fallback" />
         )}
-        <div className="hero-overlay" />
+        <div className="hero-vignette-bottom" />
+        <div className="hero-vignette-left" />
       </div>
 
-      <div className="hero-content">
-        <div className="hero-tag">🔥 Trending Premiere</div>
-        <h1 className="hero-title">{movie.title}</h1>
+      <div className="hero-inner-container">
+        <div className="hero-content">
+          {/* Top Marquee Badges */}
+          <div className="hero-badge-row">
+            <span className="hero-badge-special">🔥 BLOCKBUSTER OF THE WEEK</span>
+            <span className="hero-badge-format">{activeMovie.formats[0] ?? 'IMAX'}</span>
+          </div>
 
-        <div className="hero-meta">
-          <span className="badge badge-rating">⭐ {movie.rating} / 10</span>
-          <span className="badge badge-duration">⏱️ {movie.duration}</span>
-          <span className="badge badge-lang">🌐 {movie.language}</span>
-          <span className="badge badge-year">{movie.releaseYear}</span>
+          <h1 className="hero-title">{activeMovie.title}</h1>
+
+          {/* Rating, Certification, Duration */}
+          <div className="hero-meta-strip">
+            <div className="hero-rating-pill">
+              <span className="star-icon">★</span>
+              <span className="rating-score">{activeMovie.rating}</span>
+              <span className="rating-votes">/ 10 ({activeMovie.votes})</span>
+            </div>
+            <span className="hero-meta-dot">•</span>
+            <span className="hero-meta-pill">{activeMovie.certification}</span>
+            <span className="hero-meta-dot">•</span>
+            <span className="hero-meta-pill">⏱️ {activeMovie.duration}</span>
+            <span className="hero-meta-dot">•</span>
+            <span className="hero-meta-pill">🗣️ {activeMovie.language}</span>
+          </div>
+
+          {/* Genres */}
+          <div className="hero-genre-tags">
+            {activeMovie.genre.map((g) => (
+              <span key={g} className="hero-genre-pill">
+                {g}
+              </span>
+            ))}
+          </div>
+
+          {/* Synopsis */}
+          <p className="hero-synopsis">{activeMovie.synopsis}</p>
+
+          {/* Director & Cast snippet */}
+          {activeMovie.cast && (
+            <div className="hero-cast-strip">
+              <span className="cast-label">Starring:</span>
+              <span className="cast-names">{activeMovie.cast.join(', ')}</span>
+            </div>
+          )}
+
+          {/* CTAs */}
+          <div className="hero-action-buttons">
+            <button
+              type="button"
+              className="btn btn-primary btn-hero"
+              onClick={() => onBookTickets(activeMovie)}
+            >
+              <span className="btn-icon">🎟️</span>
+              <span>Book Tickets</span>
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-hero"
+              onClick={() => onWatchTrailer(activeMovie)}
+            >
+              <span className="btn-icon">▶</span>
+              <span>Watch Trailer</span>
+            </button>
+          </div>
         </div>
 
-        <div className="hero-genres">
-          {movie.genre.map((g) => (
-            <span key={g} className="genre-pill">
-              {g}
-            </span>
-          ))}
-        </div>
-
-        <p className="hero-synopsis">{movie.synopsis}</p>
-
-        <div className="hero-actions">
-          <button
-            type="button"
-            className="btn btn-primary btn-lg"
-            onClick={() => onBookTickets(movie)}
-          >
-            🎟️ Book Tickets
-          </button>
-          <button
-            type="button"
-            className="btn btn-outline btn-lg"
-            onClick={() =>
-              alert(`Watch Trailer preview for "${movie.title}" will be available soon!`)
-            }
-          >
-            ▶ Watch Trailer
-          </button>
-        </div>
+        {/* Carousel Quick Switcher Thumbnails */}
+        {featuredMovies.length > 1 && (
+          <div className="hero-carousel-selector" aria-label="Featured Blockbusters Carousel">
+            <span className="selector-title">Trending Highlights</span>
+            <div className="selector-cards-row">
+              {featuredMovies.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  className={`selector-thumb-card ${activeMovie.id === m.id ? 'active' : ''}`}
+                  onClick={() => onSelectMovie(m)}
+                >
+                  <img src={m.posterUrl} alt={m.title} className="thumb-poster" />
+                  <div className="thumb-info">
+                    <span className="thumb-title">{m.title}</span>
+                    <span className="thumb-rating">⭐ {m.rating}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
