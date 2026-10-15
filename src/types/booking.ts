@@ -1,0 +1,32 @@
+import type { Movie } from './movie';
+
+export interface ShowDate {
+  id: string;
+  label: string; // e.g. "Today", "Tomorrow", "Sat"
+  day: string; // e.g. "15"
+  month: string; // e.g. "Oct"
+  fullDate: string; // e.g. "Wednesday, 15 Oct 2026"
+}
+
+export interface Showtime {
+  id: string;
+  time: string; // e.g. "10:30 AM"
+  format: string; // e.g. "IMAX 3D", "4DX", "2D"
+  status: 'Available' | 'Filling Fast' | 'Almost Full';
+  price: number;
+}
+
+export interface Theater {
+  id: string;
+  name: string;
+  location: string;
+  distance: string;
+  showtimes: Showtime[];
+}
+
+export interface BookingSelection {
+  movie: Movie;
+  date: ShowDate;
+  theater: Theater;
+  showtime: Showtime;
+}

@@ -1,23 +1,36 @@
 import { useState, useMemo } from 'react';
 import type { Movie } from './types/movie';
+import type { BookingSelection } from './types/booking';
 import { MOVIES_DATA } from './data/movies';
 import { Navbar } from './components/Navbar';
 import { FeaturedMovie } from './components/FeaturedMovie';
 import { MovieGrid } from './components/MovieGrid';
 import { CinemaPerks } from './components/CinemaPerks';
-import { BookingNoticeModal } from './components/BookingNoticeModal';
+import { ShowtimeSelection } from './components/ShowtimeSelection';
+import { SeatSelectionPlaceholder } from './components/SeatSelectionPlaceholder';
 import { TrailerModal } from './components/TrailerModal';
 import { Footer } from './components/Footer';
 import './App.css';
 
+// The 3 views in our application
+type AppView = 'LISTING' | 'SHOWTIMES' | 'SEAT_SELECTION';
+
 function App() {
+  // Navigation & View State
+  const [currentView, setCurrentView] = useState<AppView>('LISTING');
+
+  // Movie & Booking Selection State
+  const [selectedMovieForBooking, setSelectedMovieForBooking] = useState<Movie | null>(null);
+  const [activeBookingSelection, setActiveBookingSelection] = useState<BookingSelection | null>(null);
+
+  // Search, City & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('Bengaluru');
   const [selectedGenre, setSelectedGenre] = useState('All');
   const [selectedFormat, setSelectedFormat] = useState('All Formats');
   const [sortBy, setSortBy] = useState('featured');
 
-  // Featured movies for the marquee carousel
+  // Featured movies for hero banner
   const featuredList = useMemo(() => {
     return MOVIES_DATA.filter((m) => m.isFeatured);
   }, []);
@@ -26,11 +39,10 @@ function App() {
     return featuredList[0] ?? MOVIES_DATA[0];
   });
 
-  // Modal states
-  const [bookingMovie, setBookingMovie] = useState<Movie | null>(null);
+  // Modal State for Video Trailers
   const [trailerMovie, setTrailerMovie] = useState<Movie | null>(null);
 
-  // Compute unique genres
+  // Computed Genre & Format list
   const availableGenres = useMemo(() => {
     const genreSet = new Set<string>();
     for (const movie of MOVIES_DATA) {
@@ -41,26 +53,22 @@ function App() {
     return ['All', ...Array.from(genreSet)];
   }, []);
 
-  // Formats available in modern cinemas
   const availableFormats = useMemo(() => {
     return ['All Formats', 'IMAX 3D', '4DX', 'Dolby Cinema', '2D'];
   }, []);
 
-  // Filter & Sort movies
+  // Filtered & Sorted Movie List
   const displayedMovies = useMemo(() => {
     const result = MOVIES_DATA.filter((movie) => {
-      // 1. Genre filter
       const matchesGenre =
         selectedGenre === 'All' || movie.genre.includes(selectedGenre);
 
-      // 2. Format filter
       const matchesFormat =
         selectedFormat === 'All Formats' ||
         movie.formats.some((f) =>
           f.toLowerCase().includes(selectedFormat.toLowerCase().replace('all formats', ''))
         );
 
-      // 3. Search query (title, genre, cast, director, language)
       const q = searchQuery.trim().toLowerCase();
       const matchesSearch =
         q === '' ||
@@ -73,7 +81,6 @@ function App() {
       return matchesGenre && matchesFormat && matchesSearch;
     });
 
-    // Sort order
     if (sortBy === 'rating') {
       result.sort((a, b) => b.rating - a.rating);
     } else if (sortBy === 'title') {
@@ -82,6 +89,32 @@ function App() {
 
     return result;
   }, [selectedGenre, selectedFormat, searchQuery, sortBy]);
+
+  // Handler: When user clicks "Book Tickets" on any movie
+  const handleStartBooking = (movie: Movie) => {
+    setSelectedMovieForBooking(movie);
+    setCurrentView('SHOWTIMES');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handler: Return back to movie catalog
+  const handleBackToListing = () => {
+    setCurrentView('LISTING');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handler: User confirms showtime and clicks "Continue to Seats"
+  const handleContinueToSeats = (selection: BookingSelection) => {
+    setActiveBookingSelection(selection);
+    setCurrentView('SEAT_SELECTION');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handler: From seat selection, go back to change showtime
+  const handleBackToShowtimes = () => {
+    setCurrentView('SHOWTIMES');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleResetFilters = () => {
     setSelectedGenre('All');
@@ -101,50 +134,64 @@ function App() {
       />
 
       <main className="main-content">
-        {/* 2. Cinematic Featured Hero Marquee */}
-        <FeaturedMovie
-          featuredMovies={featuredList}
-          activeMovie={activeFeaturedMovie}
-          onSelectMovie={setActiveFeaturedMovie}
-          onBookTickets={(movie) => setBookingMovie(movie)}
-          onWatchTrailer={(movie) => setTrailerMovie(movie)}
-        />
+        {/* CONDITIONAL RENDERING VIEW 1: Movie Listing Homepage */}
+        {currentView === 'LISTING' && (
+          <>
+            <FeaturedMovie
+              featuredMovies={featuredList}
+              activeMovie={activeFeaturedMovie}
+              onSelectMovie={setActiveFeaturedMovie}
+              onBookTickets={handleStartBooking}
+              onWatchTrailer={(movie) => setTrailerMovie(movie)}
+            />
 
-        {/* 3. Assurance & Perks Strip */}
-        <CinemaPerks />
+            <CinemaPerks />
 
-        {/* 4. Movie Catalog Grid */}
-        <MovieGrid
-          movies={displayedMovies}
-          selectedGenre={selectedGenre}
-          onSelectGenre={setSelectedGenre}
-          availableGenres={availableGenres}
-          selectedFormat={selectedFormat}
-          onSelectFormat={setSelectedFormat}
-          availableFormats={availableFormats}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-          onBookTickets={(movie) => setBookingMovie(movie)}
-          onWatchTrailer={(movie) => setTrailerMovie(movie)}
-          onResetFilters={handleResetFilters}
-        />
+            <MovieGrid
+              movies={displayedMovies}
+              selectedGenre={selectedGenre}
+              onSelectGenre={setSelectedGenre}
+              availableGenres={availableGenres}
+              selectedFormat={selectedFormat}
+              onSelectFormat={setSelectedFormat}
+              availableFormats={availableFormats}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              onBookTickets={handleStartBooking}
+              onWatchTrailer={(movie) => setTrailerMovie(movie)}
+              onResetFilters={handleResetFilters}
+            />
+          </>
+        )}
+
+        {/* CONDITIONAL RENDERING VIEW 2: Movie Details & Showtime Selection */}
+        {currentView === 'SHOWTIMES' && selectedMovieForBooking && (
+          <ShowtimeSelection
+            movie={selectedMovieForBooking}
+            selectedCity={selectedCity}
+            onBackToListing={handleBackToListing}
+            onContinueToSeats={handleContinueToSeats}
+          />
+        )}
+
+        {/* CONDITIONAL RENDERING VIEW 3: Seat Selection Placeholder */}
+        {currentView === 'SEAT_SELECTION' && activeBookingSelection && (
+          <SeatSelectionPlaceholder
+            booking={activeBookingSelection}
+            onBackToShowtimes={handleBackToShowtimes}
+            onBackToListing={handleBackToListing}
+          />
+        )}
       </main>
 
-      {/* 5. Footer */}
+      {/* Footer */}
       <Footer />
 
-      {/* 6. Booking Flow Modal */}
-      <BookingNoticeModal
-        movie={bookingMovie}
-        onClose={() => setBookingMovie(null)}
-        selectedCity={selectedCity}
-      />
-
-      {/* 7. Trailer Video Modal */}
+      {/* Video Trailer Modal */}
       <TrailerModal
         movie={trailerMovie}
         onClose={() => setTrailerMovie(null)}
-        onBookTickets={(movie) => setBookingMovie(movie)}
+        onBookTickets={handleStartBooking}
       />
     </div>
   );
