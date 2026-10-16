@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Literal, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 
@@ -59,6 +59,22 @@ class TokenResponse(BaseModel):
 
 
 # --- Seat & Showtime Models ---
+class ShowtimeSlotResponse(BaseModel):
+    id: str
+    time: str
+    format: str
+    status: Literal["Available", "Filling Fast", "Almost Full"]
+    price: int
+
+
+class TheaterShowtimesResponse(BaseModel):
+    id: str
+    name: str
+    location: str
+    distance: str
+    showtimes: List[ShowtimeSlotResponse]
+
+
 class ShowtimeSeatsResponse(BaseModel):
     showtime_id: str
     booked_seats: List[str]
@@ -76,10 +92,11 @@ class BookingCreateRequest(BaseModel):
     format: Optional[str] = None
     seats: List[str] = Field(..., min_length=1, description="List of seat identifiers, e.g. ['A1', 'A2']")
     payment_method: str = Field(default="upi", description="Payment method: upi, card, or netbanking")
-    price_per_seat: int = Field(..., gt=0)
-    subtotal: int = Field(..., gt=0)
-    convenience_fee: int = Field(default=0, ge=0)
-    total_amount: int = Field(..., gt=0)
+    # Client amounts are ignored; the API prices from the showtime row.
+    price_per_seat: Optional[int] = Field(default=None, gt=0)
+    subtotal: Optional[int] = Field(default=None, gt=0)
+    convenience_fee: Optional[int] = Field(default=None, ge=0)
+    total_amount: Optional[int] = Field(default=None, gt=0)
 
 
 class BookingResponse(BaseModel):

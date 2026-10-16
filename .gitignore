@@ -30,3 +30,12 @@ __pycache__/
 .venv/
 venv/
 ENV/
+.neon
+
+# Secrets (Neon DATABASE_URL, object storage keys)
+.env
+.env.*
+!.env.example
+!backend/.env.example
+.vercel
+.env*

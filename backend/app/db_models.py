@@ -8,6 +8,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Text,
     UniqueConstraint,
 )
@@ -88,13 +89,16 @@ class Theater(Base):
 
 class Showtime(Base):
     __tablename__ = "showtimes"
+    __table_args__ = (
+        Index("ix_showtimes_movie_date", "movie_id", "show_date"),
+    )
 
-    id = Column(String(50), primary_key=True, index=True)
-    movie_id = Column(String(50), ForeignKey("movies.id"), nullable=False)
-    theater_id = Column(String(50), ForeignKey("theaters.id"), nullable=False)
-    show_date = Column(String(50), nullable=False) # e.g. "d1", "2026-10-15"
-    time = Column(String(50), nullable=False) # e.g. "10:30 AM"
-    format = Column(String(50), nullable=False) # e.g. "IMAX 3D"
+    id = Column(String(80), primary_key=True, index=True)
+    movie_id = Column(String(50), ForeignKey("movies.id"), nullable=False, index=True)
+    theater_id = Column(String(50), ForeignKey("theaters.id"), nullable=False, index=True)
+    show_date = Column(String(50), nullable=False)  # e.g. "d1"
+    time = Column(String(50), nullable=False)
+    format = Column(String(50), nullable=False)
     price = Column(Integer, nullable=False)
 
     movie = relationship("Movie", back_populates="showtimes")
@@ -108,8 +112,8 @@ class Booking(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     booking_ref = Column(String(50), unique=True, index=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    showtime_id = Column(String(50), ForeignKey("showtimes.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    showtime_id = Column(String(80), ForeignKey("showtimes.id"), nullable=False, index=True)
     seat_count = Column(Integer, nullable=False)
     price_per_seat = Column(Integer, nullable=False)
     subtotal = Column(Integer, nullable=False)
@@ -135,7 +139,7 @@ class BookedSeat(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
-    showtime_id = Column(String(50), ForeignKey("showtimes.id"), nullable=False)
+    showtime_id = Column(String(80), ForeignKey("showtimes.id"), nullable=False, index=True)
     seat_number = Column(String(10), nullable=False) # e.g. "A1", "C5"
     status = Column(String(50), default="CONFIRMED", nullable=False)
 

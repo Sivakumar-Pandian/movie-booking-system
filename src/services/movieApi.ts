@@ -1,4 +1,5 @@
 import type { Movie } from '../types/movie';
+import { MOVIES_DATA } from '../data/movies';
 
 // Base URL for the FastAPI backend, configurable via Vite environment variables
 const API_BASE_URL =
@@ -6,30 +7,22 @@ const API_BASE_URL =
 
 /**
  * Fetch movies from the FastAPI backend endpoint (GET /api/movies).
- * Handles network failure and HTTP status errors safely.
+ * Falls back to local MOVIES_DATA when the backend server is unreachable.
  */
 export async function fetchMoviesFromApi(): Promise<Movie[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/movies`);
 
-    // Guard: fetch() only rejects on network failures, not on HTTP 4xx/5xx responses!
     if (!response.ok) {
-      throw new Error(
-        `Server returned error ${response.status}: ${response.statusText || 'Unable to load movies'}`
-      );
+      console.warn(`Backend returned status ${response.status}. Falling back to default movie catalog.`);
+      return MOVIES_DATA;
     }
 
     const data: Movie[] = await response.json();
-    return data;
+    return Array.isArray(data) && data.length > 0 ? data : MOVIES_DATA;
   } catch (err: unknown) {
-    if (err instanceof TypeError && err.message.includes('fetch')) {
-      throw new Error(
-        `Cannot connect to backend server at ${API_BASE_URL}. Ensure the FastAPI server is running.`
-      );
-    }
-    if (err instanceof Error) {
-      throw err;
-    }
-    throw new Error('An unexpected error occurred while fetching movies.');
+    console.warn('Backend server not reachable, using offline movie catalog:', err);
+    return MOVIES_DATA;
   }
 }
+
