@@ -1,9 +1,6 @@
 import type { Movie } from '../types/movie';
 import { MOVIES_DATA } from '../data/movies';
-
-// Base URL for the FastAPI backend, configurable via Vite environment variables
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) || 'http://localhost:8000';
+import { API_BASE_URL } from './apiConfig';
 
 /**
  * Fetch movies from the FastAPI backend endpoint (GET /api/movies).

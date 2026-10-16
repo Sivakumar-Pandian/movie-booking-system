@@ -1,7 +1,5 @@
 import type { AuthUser, AuthResponse, RegisterPayload, LoginPayload } from '../types/auth';
-
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) || 'http://localhost:8000';
+import { API_BASE_URL } from './apiConfig';
 
 const TOKEN_KEY = 'yozigo_auth_token';
 const USER_KEY = 'yozigo_user';
