@@ -13,11 +13,24 @@ router = APIRouter(tags=["Movies"])
 
 @router.get("/api/movies/{movie_id}/show-dates", response_model=List[str], summary="List future dates with showtimes")
 def get_movie_show_dates(movie_id: str, db: Session = Depends(get_db)) -> List[str]:
-    # ISO strings sort chronologically; filtering to today prevents stale data from appearing.
     from datetime import date
-    return [row[0] for row in db.query(Showtime.show_date).filter(
-        Showtime.movie_id == movie_id, Showtime.show_date >= date.today().isoformat()
-    ).distinct().order_by(Showtime.show_date).all()]
+
+    today = date.today()
+    candidate_dates = db.query(Showtime.show_date).filter(
+        Showtime.movie_id == movie_id,
+        Showtime.show_date >= today.isoformat(),
+    ).distinct().order_by(Showtime.show_date).all()
+
+    future_dates = set()
+    for (show_date,) in candidate_dates:
+        try:
+            parsed_date = date.fromisoformat(show_date)
+        except (TypeError, ValueError):
+            continue
+        if parsed_date >= today and parsed_date.isoformat() == show_date:
+            future_dates.add(show_date)
+
+    return sorted(future_dates)
 
 
 @router.get("/api/movies", response_model=List[MovieResponse], summary="Fetch all movies currently showing")

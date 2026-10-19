@@ -15,6 +15,31 @@ interface ShowtimeSelectionProps {
   }) => void;
 }
 
+function toShowDate(isoDate: string): ShowDate | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const value = new Date(year, month - 1, day, 12);
+  if (
+    value.getFullYear() !== year ||
+    value.getMonth() !== month - 1 ||
+    value.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return {
+    id: isoDate,
+    label: value.toLocaleDateString('en-IN', { weekday: 'short' }),
+    day: String(day),
+    month: value.toLocaleDateString('en-IN', { month: 'short' }),
+    fullDate: value.toLocaleDateString('en-IN', { dateStyle: 'full' }),
+  };
+}
+
 export const ShowtimeSelection = ({
   movie,
   selectedCity,
@@ -30,11 +55,13 @@ export const ShowtimeSelection = ({
 
   useEffect(() => {
     fetchShowDates(movie.id).then((items) => {
-      const mapped = items.map((iso) => {
-        const value = new Date(`${iso}T12:00:00`);
-        return { id: iso, label: value.toLocaleDateString('en-IN', { weekday: 'short' }), day: String(value.getDate()), month: value.toLocaleDateString('en-IN', { month: 'short' }), fullDate: value.toLocaleDateString('en-IN', { dateStyle: 'full' }) };
+      const mapped = items.flatMap((iso) => {
+        const showDate = toShowDate(iso);
+        return showDate ? [showDate] : [];
       });
-      setDates(mapped); setSelectedDate(mapped[0] ?? null);
+      setDates(mapped);
+      setSelectedDate(mapped[0] ?? null);
+      setLoadError(mapped.length ? null : 'No future showtimes are currently available.');
     }).catch(() => setLoadError('No future showtimes are currently available.'));
   }, [movie.id]);
 

@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base, ensure_database_schema, get_db
+from app.db_models import Showtime
 from app.main import app
 from app.seed import seed_database_if_empty
 from app.seed_admin import seed_admin_account
@@ -61,6 +62,43 @@ def test_get_movies():
     assert "title" in movies[0]
     assert "duration" in movies[0]
     assert "formats" in movies[0]
+
+
+def test_show_dates_exclude_legacy_and_invalid_values():
+    from datetime import date
+
+    invalid_showtime_ids = ["legacy-date-showtime", "invalid-date-showtime"]
+    db = TestingSessionLocal()
+    try:
+        db.add_all(
+            [
+                Showtime(
+                    id=showtime_id,
+                    movie_id="m1",
+                    theater_id="th-1",
+                    show_date=show_date,
+                    time="10:30 AM",
+                    format="2D",
+                    price=250,
+                )
+                for showtime_id, show_date in zip(
+                    invalid_showtime_ids,
+                    ["d1", "2026-99-99"],
+                )
+            ]
+        )
+        db.commit()
+
+        response = client.get("/api/movies/m1/show-dates")
+        assert response.status_code == 200
+        show_dates = response.json()
+        assert "d1" not in show_dates
+        assert "2026-99-99" not in show_dates
+        assert all(date.fromisoformat(show_date).isoformat() == show_date for show_date in show_dates)
+    finally:
+        db.query(Showtime).filter(Showtime.id.in_(invalid_showtime_ids)).delete(synchronize_session=False)
+        db.commit()
+        db.close()
 
 
 # 2. Authentication Flow
