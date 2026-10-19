@@ -171,6 +171,12 @@ When two users concurrently attempt to book the same seats for a showtime, Yozig
 
 ---
 
+## 🗄️ Database Design
+
+![Database design](database%20design.png)
+
+---
+
 ## 📡 API Endpoints
 
 | Method | Endpoint | Description | Auth Required |
