@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.auth import get_current_admin
 from app.database import get_db
-from app.db_models import BookedSeat, Booking, Movie, Showtime, User
+from app.db_models import BookedSeat, Booking, Movie, SeatHold, Showtime, Theater, User
 from app.models import AdminShowReport, MovieResponse, MovieUpsert, ShowtimeCreate
 from app.catalog import movie_to_response
 
@@ -60,6 +60,8 @@ def delete_movie(movie_id: str, _: User = Depends(get_current_admin), db: Sessio
     if not movie: raise HTTPException(status_code=404, detail="Movie not found.")
     if db.query(Booking).join(Showtime).filter(Showtime.movie_id == movie_id).first():
         raise HTTPException(status_code=409, detail="Movies with bookings cannot be deleted.")
+    if db.query(Showtime).filter(Showtime.movie_id == movie_id).first():
+        raise HTTPException(status_code=409, detail="Delete this movie's showtimes before deleting the movie.")
     db.delete(movie); db.commit()
 
 
@@ -67,6 +69,8 @@ def delete_movie(movie_id: str, _: User = Depends(get_current_admin), db: Sessio
 def add_showtime(payload: ShowtimeCreate, _: User = Depends(get_current_admin), db: Session = Depends(get_db)):
     movie = db.query(Movie).filter(Movie.id == payload.movie_id).first()
     if not movie: raise HTTPException(status_code=404, detail="Movie not found.")
+    theater = db.query(Theater).filter(Theater.id == payload.theater_id).first()
+    if not theater: raise HTTPException(status_code=404, detail="Screen not found.")
     if db.query(Showtime).filter(Showtime.id == payload.id).first(): raise HTTPException(status_code=409, detail="Showtime ID already exists.")
     try: start = datetime.strptime(f"{payload.show_date} {payload.time}", "%Y-%m-%d %I:%M %p")
     except ValueError: raise HTTPException(status_code=422, detail="Use ISO date and a 12-hour time such as 07:30 PM.")
@@ -87,6 +91,7 @@ def delete_showtime(showtime_id: str, _: User = Depends(get_current_admin), db: 
     if not show: raise HTTPException(status_code=404, detail="Showtime not found.")
     if db.query(Booking).filter(Booking.showtime_id == showtime_id).first():
         raise HTTPException(status_code=409, detail="A show with bookings cannot be deleted.")
+    db.query(SeatHold).filter(SeatHold.showtime_id == showtime_id).delete(synchronize_session=False)
     db.delete(show); db.commit()
 
 
@@ -99,4 +104,3 @@ def show_reports(_: User = Depends(get_current_admin), db: Session = Depends(get
         revenue = db.query(func.coalesce(func.sum(Booking.total_amount), 0)).filter(Booking.showtime_id == show.id, Booking.payment_status == "COMPLETED").scalar()
         results.append(AdminShowReport(showtime_id=show.id, movie_title=show.movie.title, show_date=show.show_date, time=show.time, booked_seats=count, occupancy_percent=round(count * 100 / 80, 1), total_collected=int(revenue)))
     return results
-

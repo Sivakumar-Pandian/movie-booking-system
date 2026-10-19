@@ -47,11 +47,9 @@ SAMPLE_THEATERS_SEED = [
 
 def seed_database_if_empty(db: Session):
     """Seed or update movies, theaters, and showtimes."""
-    # Demo accounts are explicit seed-only accounts; public registration is always CUSTOMER.
-    demo_accounts = [
-        ("customer@yozigo.test", "DemoCustomer2026!", "Demo Customer", "CUSTOMER"),
-        ("admin@yozigo.test", "DemoAdmin2026!", "Yozigo Admin", "ADMIN"),
-    ]
+    # Public registration is always CUSTOMER. Admin accounts are seeded separately
+    # so known demo credentials are never created automatically in production.
+    demo_accounts = [("customer@yozigo.com", "DemoCustomer2026!", "Demo Customer", "CUSTOMER")]
     for email, password, name, role in demo_accounts:
         if not db.query(User).filter(User.email == email).first():
             db.add(User(email=email, hashed_password=hash_password(password), full_name=name, role=role))

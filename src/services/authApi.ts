@@ -4,6 +4,22 @@ import { API_BASE_URL } from './apiConfig';
 const TOKEN_KEY = 'yozigo_auth_token';
 const USER_KEY = 'yozigo_user';
 
+function getApiErrorMessage(data: unknown, fallback: string): string {
+  if (!data || typeof data !== 'object' || !('detail' in data)) return fallback;
+  const { detail } = data;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item: unknown) => {
+        if (!item || typeof item !== 'object' || !('msg' in item)) return null;
+        return typeof item.msg === 'string' ? item.msg : null;
+      })
+      .filter((message): message is string => message !== null);
+    if (messages.length) return messages.join(' ');
+  }
+  return fallback;
+}
+
 export const getStoredToken = (): string | null => {
   return localStorage.getItem(TOKEN_KEY);
 };
@@ -36,8 +52,8 @@ export async function registerApi(payload: RegisterPayload): Promise<AuthRespons
   });
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({ detail: 'Registration failed' }));
-    throw new Error(errorData.detail || 'Failed to create account.');
+    const errorData: unknown = await res.json().catch(() => null);
+    throw new Error(getApiErrorMessage(errorData, 'Failed to create account.'));
   }
 
   const data: AuthResponse = await res.json();
@@ -53,8 +69,8 @@ export async function loginApi(payload: LoginPayload): Promise<AuthResponse> {
   });
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({ detail: 'Login failed' }));
-    throw new Error(errorData.detail || 'Invalid email or password.');
+    const errorData: unknown = await res.json().catch(() => null);
+    throw new Error(getApiErrorMessage(errorData, 'Invalid email or password.'));
   }
 
   const data: AuthResponse = await res.json();

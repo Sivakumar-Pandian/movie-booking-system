@@ -102,8 +102,15 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Seed the local SQLite database explicitly; use a unique password for other environments
+DATABASE_URL=sqlite:///./yozigo.db \
+ADMIN_EMAIL=admin@yozigo.com \
+ADMIN_PASSWORD='DemoAdmin2026!' \
+ADMIN_FULL_NAME='Yozigo Admin' \
+PYTHONPATH=. .venv/bin/python -m app.seed_admin
+
 # Start the FastAPI server
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+DATABASE_URL=sqlite:///./yozigo.db uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 The backend API will be available at:
@@ -151,12 +158,14 @@ npm run build
 
 ## 🔑 Seeded Test Accounts
 
-The API creates these accounts on first start. Public registration always creates a customer account.
+The API creates the customer demo account on first start. Create the admin account by running the explicit seed command above. Public registration always creates a customer account.
 
 | Role | Email | Password |
 |---|---|---|
-| Customer | `customer@yozigo.test` | `DemoCustomer2026!` |
-| Admin | `admin@yozigo.test` | `DemoAdmin2026!` |
+| Customer | `customer@yozigo.com` | `DemoCustomer2026!` |
+| Admin (explicitly seeded) | `admin@yozigo.com` | `DemoAdmin2026!` |
+
+The admin seed command requires `ADMIN_EMAIL` and `ADMIN_PASSWORD`. It creates that account or updates the matching account to the `ADMIN` role. The application does not automatically create a known-password admin at startup. The commands above explicitly target the local SQLite database; verify `DATABASE_URL` and use a unique password before running the seed for any shared or production environment.
 
 ## ✅ Task Flow Coverage
 
@@ -175,7 +184,7 @@ The API creates these accounts on first start. Public registration always create
 - Temporary `seat_holds` are user-owned, expire after five minutes, and use a unique seat/showtime constraint to prevent competing holds.
 - The backend calculates ticket prices from the selected showtime and does not trust client-submitted totals.
 - Seat availability uses five-second polling: it is simple, reliable, and sufficient for this small application.
-- Admin actions are authorized server-side using a seeded `ADMIN` role; normal sign-up cannot create an admin.
+- Admin actions are authorized server-side using an explicitly seeded `ADMIN` role; normal sign-up cannot create an admin.
 
 ---
 

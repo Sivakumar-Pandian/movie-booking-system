@@ -8,6 +8,7 @@ from sqlalchemy.pool import StaticPool
 from app.database import Base, get_db
 from app.main import app
 from app.seed import seed_database_if_empty
+from app.seed_admin import seed_admin_account
 
 # Setup in-memory SQLite database specifically for clean, isolated test runs
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -25,6 +26,7 @@ def setup_test_db():
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     seed_database_if_empty(db)
+    seed_admin_account(db, "admin@yozigo.com", "DemoAdmin2026!", "Yozigo Admin")
     db.close()
     yield
     Base.metadata.drop_all(bind=engine)
@@ -214,3 +216,118 @@ def test_booking_and_double_booking_prevention():
     user1_bookings = my_bookings_res.json()
     assert len(user1_bookings) >= 1
     assert user1_bookings[0]["booking_ref"] == booking1["booking_ref"]
+
+
+def test_admin_login_and_customer_cannot_access_admin_api():
+    login_res = client.post(
+        "/api/auth/login",
+        json={"email": "admin@yozigo.com", "password": "DemoAdmin2026!"},
+    )
+    assert login_res.status_code == 200
+    assert login_res.json()["user"]["role"] == "ADMIN"
+    admin_token = login_res.json()["access_token"]
+
+    customer = client.post(
+        "/api/auth/register",
+        json={
+            "email": "regular@yozigo.com",
+            "password": "CustomerPass123!",
+            "full_name": "Regular Customer",
+            "role": "ADMIN",
+        },
+    )
+    assert customer.status_code == 201
+    assert customer.json()["user"]["role"] == "CUSTOMER"
+    denied = client.get(
+        "/api/admin/movies",
+        headers={"Authorization": f"Bearer {customer.json()['access_token']}"},
+    )
+    assert denied.status_code == 403
+
+    allowed = client.get(
+        "/api/admin/movies",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert allowed.status_code == 200
+
+
+def test_admin_movie_crud_and_showtime_overlap_validation():
+    login_res = client.post(
+        "/api/auth/login",
+        json={"email": "admin@yozigo.com", "password": "DemoAdmin2026!"},
+    )
+    token = login_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    movie = {
+        "id": "admin-crud-test",
+        "title": "Admin CRUD Test",
+        "duration": "2h 0m",
+        "language": "English",
+        "certification": "UA",
+        "poster_url": "https://placehold.co/300x450",
+        "synopsis": "Admin CRUD test movie",
+        "rating": 7.5,
+        "votes": "10",
+        "genre": ["Drama"],
+        "formats": ["2D"],
+        "release_year": 2026,
+    }
+
+    created = client.post("/api/admin/movies", json=movie, headers=headers)
+    assert created.status_code == 201
+    updated_movie = {**movie, "title": "Updated Admin CRUD Test"}
+    updated = client.put(
+        f"/api/admin/movies/{movie['id']}",
+        json=updated_movie,
+        headers=headers,
+    )
+    assert updated.status_code == 200
+    assert updated.json()["title"] == updated_movie["title"]
+    deleted = client.delete(f"/api/admin/movies/{movie['id']}", headers=headers)
+    assert deleted.status_code == 204
+
+    movie_with_schedule = client.delete("/api/admin/movies/m2", headers=headers)
+    assert movie_with_schedule.status_code == 409
+    assert "showtimes" in movie_with_schedule.json()["detail"]
+
+    from datetime import date, timedelta
+
+    show_date = (date.today() + timedelta(days=1)).isoformat()
+    overlapping_show = {
+        "id": "admin-overlap-test",
+        "movie_id": "m1",
+        "theater_id": "th-1",
+        "show_date": show_date,
+        "time": "11:00 AM",
+        "format": "2D",
+        "price": 250,
+    }
+    overlap = client.post("/api/admin/showtimes", json=overlapping_show, headers=headers)
+    assert overlap.status_code == 409
+    assert "overlaps" in overlap.json()["detail"]
+
+    available_show = {**overlapping_show, "id": "admin-non-overlap-test", "time": "06:00 AM"}
+    created_show = client.post("/api/admin/showtimes", json=available_show, headers=headers)
+    assert created_show.status_code == 201
+    deleted_show = client.delete(
+        f"/api/admin/showtimes/{available_show['id']}",
+        headers=headers,
+    )
+    assert deleted_show.status_code == 204
+
+
+def test_admin_cannot_delete_movie_or_showtime_with_bookings():
+    login_res = client.post(
+        "/api/auth/login",
+        json={"email": "admin@yozigo.com", "password": "DemoAdmin2026!"},
+    )
+    headers = {"Authorization": f"Bearer {login_res.json()['access_token']}"}
+
+    dates = client.get("/api/movies/m1/show-dates").json()
+    theaters = client.get(f"/api/movies/m1/theaters?date={dates[0]}").json()
+    booked_showtime_id = theaters[0]["showtimes"][0]["id"]
+    show_delete = client.delete(f"/api/admin/showtimes/{booked_showtime_id}", headers=headers)
+    assert show_delete.status_code == 409
+
+    movie_delete = client.delete("/api/admin/movies/m1", headers=headers)
+    assert movie_delete.status_code == 409
