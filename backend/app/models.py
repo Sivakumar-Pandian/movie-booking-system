@@ -127,12 +127,14 @@ class CancelBookingResponse(BaseModel):
 
 
 class MovieUpsert(BaseModel):
-    id: str = Field(..., min_length=1, max_length=50)
+    id: Optional[str] = Field(default=None, min_length=1, max_length=50)
     title: str = Field(..., min_length=1)
     duration: str = Field(..., description="Runtime such as '2h 30m'")
     language: str
     certification: str
     poster_url: str
+    backdrop_url: Optional[str] = None
+    trailer_youtube_id: Optional[str] = None
     synopsis: str = ""
     rating: float = 0
     votes: str = "0"
@@ -149,6 +151,42 @@ class ShowtimeCreate(BaseModel):
     time: str = Field(..., description="12-hour time, e.g. 07:30 PM")
     format: str = "2D"
     price: int = Field(..., gt=0)
+
+
+class StandardShowtimesCreate(BaseModel):
+    movie_id: str
+    theater_ids: List[str] = Field(..., min_length=1)
+    show_date: str
+    times: List[str] = Field(..., min_length=1)
+    format: str
+    price: int = Field(..., gt=0)
+
+
+class ShowtimeUpdate(BaseModel):
+    show_date: str
+    time: str
+    format: str
+    price: int = Field(..., gt=0)
+
+
+class AdminTheaterResponse(BaseModel):
+    id: str
+    name: str
+    location: str
+    distance: str
+
+
+class AdminShowtimeResponse(BaseModel):
+    id: str
+    movie_id: str
+    movie_title: str
+    theater_id: str
+    theater_name: str
+    show_date: str
+    time: str
+    format: str
+    price: int
+    has_bookings: bool
 
 
 class AdminShowReport(BaseModel):

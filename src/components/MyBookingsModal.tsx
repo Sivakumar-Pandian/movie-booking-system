@@ -109,13 +109,18 @@ export const MyBookingsModal = ({
           {!loading && !error && bookings.length > 0 && (
             <div className="bookings-list">
               {bookings.map((b) => (
-                <article key={b.booking_ref} className="booking-ticket-item">
+                <article
+                  key={b.booking_ref}
+                  className={`booking-ticket-item${b.payment_status === 'CANCELLED' ? ' booking-ticket-item-cancelled' : ''}`}
+                >
                   <div className="ticket-item-top">
                     <div className="ticket-ref-box">
                       <span className="ticket-label">BOOKING ID</span>
                       <strong className="ticket-code">{b.booking_ref}</strong>
                     </div>
-                    <span className="ticket-status-pill">{b.payment_status}</span>
+                    <span className={`ticket-status-pill${b.payment_status === 'CANCELLED' ? ' ticket-status-pill-cancelled' : ''}`}>
+                      {b.payment_status}
+                    </span>
                   </div>
 
                   <div className="ticket-item-body">

@@ -4,7 +4,7 @@ from pydantic import EmailStr, TypeAdapter, ValidationError
 from sqlalchemy.orm import Session
 
 from app.auth import hash_password
-from app.database import Base, SessionLocal, engine
+from app.database import SessionLocal, ensure_database_schema
 from app.db_models import User
 
 
@@ -36,7 +36,7 @@ def main() -> None:
         raise SystemExit("ADMIN_FULL_NAME must not be empty.")
 
     try:
-        Base.metadata.create_all(bind=engine)
+        ensure_database_schema()
         with SessionLocal() as db:
             admin = seed_admin_account(db, email, password, full_name)
     except (ValueError, ValidationError) as error:

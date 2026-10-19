@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { Movie } from './types/movie';
 import type { BookingSelection, BookingConfirmation } from './types/booking';
 import type { AuthUser } from './types/auth';
@@ -101,6 +101,16 @@ function App() {
     clearStoredAuth();
     setCurrentUser(null);
   };
+
+  const handleAdminMoviesChange = useCallback((updatedMovies: Movie[]) => {
+    setMovies(updatedMovies);
+    setSelectedMovieForBooking((current) =>
+      current ? updatedMovies.find((movie) => movie.id === current.id) ?? null : null,
+    );
+    setTrailerMovie((current) =>
+      current ? updatedMovies.find((movie) => movie.id === current.id) ?? null : null,
+    );
+  }, []);
 
   const handleAuthSuccess = (user: AuthUser) => {
     setCurrentUser(user);
@@ -455,7 +465,11 @@ function App() {
         onClose={() => setIsBookingsModalOpen(false)}
         currentUser={currentUser}
       />
-      <AdminDashboard isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
+      <AdminDashboard
+        isOpen={isAdminOpen}
+        onClose={() => setIsAdminOpen(false)}
+        onMoviesChange={handleAdminMoviesChange}
+      />
     </div>
   );
 }

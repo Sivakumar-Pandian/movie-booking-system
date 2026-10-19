@@ -4,21 +4,16 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from sqlalchemy import inspect, text
-from app.database import Base, SessionLocal, engine
+from app.database import SessionLocal, ensure_database_schema
 from app.routers import admin, auth, bookings, health, movies
 from app.seed import seed_database_if_empty
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    # Lightweight compatibility migration for local databases created before roles
+    # Lightweight compatibility migration for existing databases before roles
     # were introduced. Production deployments should use a migration tool.
-    columns = {column["name"] for column in inspect(engine).get_columns("users")}
-    if "role" not in columns:
-        with engine.begin() as connection:
-            connection.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'CUSTOMER'"))
+    ensure_database_schema()
     db = SessionLocal()
     try:
         seed_database_if_empty(db)
