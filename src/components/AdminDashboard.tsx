@@ -72,10 +72,10 @@ const emptyDraft: MovieDraft = {
   release_year: String(new Date().getFullYear()),
 };
 
-function getTomorrowDate(): string {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+function getDefaultScheduleDate(): string {
+  const date = new Date();
+  date.setDate(date.getDate() + 6);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 function toApiTime(value: string): string {
@@ -183,7 +183,7 @@ export function AdminDashboard({ isOpen, onClose, onMoviesChange }: Props) {
   const [showtimes, setShowtimes] = useState<AdminShowtime[]>([]);
   const [showtimesLoading, setShowtimesLoading] = useState(false);
   const [scheduleSaving, setScheduleSaving] = useState(false);
-  const [scheduleDate, setScheduleDate] = useState(getTomorrowDate);
+  const [scheduleDate, setScheduleDate] = useState(getDefaultScheduleDate);
   const [selectedTheaterIds, setSelectedTheaterIds] = useState<string[]>([]);
   const [scheduleTimes, setScheduleTimes] = useState(STANDARD_SHOWTIMES);
   const [scheduleFormat, setScheduleFormat] = useState('2D');
@@ -258,7 +258,7 @@ export function AdminDashboard({ isOpen, onClose, onMoviesChange }: Props) {
     setScheduleMovieId(movie.id);
     setSelectedTheaterIds(theaters.map((theater) => theater.id));
     setScheduleTimes([...STANDARD_SHOWTIMES]);
-    setScheduleDate(getTomorrowDate());
+    setScheduleDate(getDefaultScheduleDate());
     setScheduleFormat(movie.formats[0] ?? '2D');
     setSchedulePrice('250');
     setEditingShowtimeId(null);
@@ -424,6 +424,7 @@ export function AdminDashboard({ isOpen, onClose, onMoviesChange }: Props) {
 
   const submitMovie = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const isNewMovie = !editingMovieId;
     setSaving(true);
     setMessage('');
     let trailerYoutubeId: string | null = null;
@@ -481,6 +482,10 @@ export function AdminDashboard({ isOpen, onClose, onMoviesChange }: Props) {
       setMovies(updatedMovies);
       onMoviesChange(updatedMovies);
       resetForm();
+      if (isNewMovie) {
+        openShowtimeManager(savedMovie);
+        setMessage('Movie added. Choose theaters, a date, and showtimes to schedule it.');
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not connect to the admin API.');
     } finally {
@@ -536,7 +541,7 @@ export function AdminDashboard({ isOpen, onClose, onMoviesChange }: Props) {
                 <h3 id="showtime-manager-title">
                   Showtimes for {scheduleMovie?.title}
                 </h3>
-                <p>Choose theaters and set the standard daily showtimes. You can adjust individual shows below.</p>
+                <p>The default date avoids the preloaded sample schedules. Choose theaters and set the showtimes; you can adjust individual shows below.</p>
               </div>
               <button type="button" className="admin-cancel-edit" onClick={closeShowtimeManager}>Back to movies</button>
             </div>
@@ -716,7 +721,7 @@ export function AdminDashboard({ isOpen, onClose, onMoviesChange }: Props) {
                 <p>
                   {editingMovieId
                     ? 'Update the movie details below.'
-                    : 'Enter the movie details; its ID will be generated from the title.'}
+                    : 'Enter the movie details; after saving, you can choose theaters and showtimes.'}
                 </p>
               </div>
               <button type="button" className="admin-cancel-edit" onClick={resetForm}>
@@ -794,7 +799,7 @@ export function AdminDashboard({ isOpen, onClose, onMoviesChange }: Props) {
               </details>
               <div className="admin-form-actions admin-field-wide">
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? 'Saving…' : editingMovieId ? 'Save changes' : 'Add movie'}
+                  {saving ? 'Saving…' : editingMovieId ? 'Save changes' : 'Add movie & choose showtimes'}
                 </button>
               </div>
             </form>
