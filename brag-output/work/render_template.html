@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Yozigo Cinemas Brag Video Frame</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #080a11;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      color: #f1f5f9;
+      position: relative;
+    }
+
+    /* Ambient Cinema Stage Lights & Beam */
+    .stage-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 1080px;
+      background: radial-gradient(circle at 50% 15%, rgba(244, 63, 94, 0.16) 0%, rgba(245, 158, 11, 0.08) 35%, rgba(8, 10, 17, 1) 75%);
+      z-index: 1;
+    }
+
+    .grid-lines {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 80px 80px;
+      opacity: 0.65;
+      z-index: 2;
+    }
+
+    .light-cone {
+      position: absolute;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      height: 700px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(244, 63, 94, 0.28) 0%, rgba(245, 158, 11, 0.1) 45%, transparent 70%);
+      filter: blur(40px);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Top Brand Watermark */
+    .top-header {
+      position: absolute;
+      top: 48px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #f43f5e, #f59e0b);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 0 25px rgba(244, 63, 94, 0.5);
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      font-size: 28px;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #ffffff 40%, #fb7185 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-sub {
+      font-size: 13px;
+      letter-spacing: 3px;
+      color: #94a3b8;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 22px;
+      border-radius: 9999px;
+      background: rgba(24, 29, 51, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 15px;
+      font-weight: 600;
+      color: #e2e8f0;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .badge-live-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 12px #10b981;
+    }
+
+    /* Common Scene Container */
+    .scene {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.98);
+      transition: none;
+    }
+
+    .scene.active {
+      display: flex;
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+
+    /* SCENE 1: THE HOOK */
+    #scene1 {
+      text-align: center;
+    }
+
+    .hook-kicker {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: #f43f5e;
+      margin-bottom: 24px;
+      display: inline-block;
+      padding: 8px 24px;
+      background: rgba(244, 63, 94, 0.12);
+      border: 1px solid rgba(244, 63, 94, 0.35);
+      border-radius: 9999px;
+    }
+
+    .hook-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 88px;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      max-width: 1300px;
+      margin-bottom: 30px;
+      text-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    }
+
+    .gradient-text-cinema {
+      background: linear-gradient(135deg, #ffffff 15%, #fb7185 55%, #f59e0b 95%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hook-desc {
+      font-size: 26px;
+      color: #94a3b8;
+      max-width: 820px;
+      line-height: 1.5;
+      margin-bottom: 44px;
+      font-weight: 400;
+    }
+
+    .hook-features-row {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .hook-chip {
+      padding: 14px 28px;
+      background: rgba(24, 29, 51, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    /* SCENE 2: MOVIE CATALOG & CAROUSEL */
+    #scene2 {
+      padding: 120px 80px 60px 80px;
+      justify-content: flex-start;
+    }
+
+    .section-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .eyebrow-tag {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #f59e0b;
+      background: rgba(245, 158, 11, 0.12);
+      padding: 6px 16px;
+      border-radius: 6px;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .eyebrow-city {
+      font-size: 15px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .scene-heading-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+      margin-bottom: 36px;
+    }
+
+    .scene-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 52px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      color: #ffffff;
+      line-height: 1.1;
+    }
+
+    .scene-subtitle {
+      font-size: 20px;
+      color: #94a3b8;
+      margin-top: 6px;
+    }
+
+    .filter-pills-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .filter-pill {
+      padding: 10px 20px;
+      border-radius: 9999px;
+      font-size: 15px;
+      font-weight: 700;
+      background: rgba(24, 29, 51, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+    }
+
+    .filter-pill.active {
+      background: #f43f5e;
+      border-color: #f43f5e;
+      color: #ffffff;
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.4);
+    }
+
+    .cards-deck {
+      display: flex;
+      gap: 32px;
+      width: 100%;
+      perspective: 1200px;
+    }
+
+    .movie-card {
+      flex: 1;
+      height: 570px;
+      background: #181d33;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      position: relative;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      transform-style: preserve-3d;
+      transition: border 0.3s ease;
+    }
+
+    .movie-card.featured {
+      border: 2px solid #f43f5e;
+      box-shadow: 0 30px 80px rgba(244, 63, 94, 0.35);
+    }
+
+    .poster-img-wrap {
+      width: 100%;
+      height: 390px;
+      position: relative;
+      overflow: hidden;
+      background: #0d101d;
+    }
+
+    .poster-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .poster-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(24, 29, 51, 0.95) 100%);
+    }
+
+    .rating-badge {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      background: rgba(13, 16, 29, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 800;
+      font-size: 15px;
+      color: #f59e0b;
+    }
+
+    .format-badge {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: rgba(244, 63, 94, 0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: #ffffff;
+    }
+
+    .card-meta {
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex: 1;
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 6px;
+    }
+
+    .card-genre {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-bottom: 16px;
+    }
+
+    .showtimes-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .time-slot {
+      flex: 1;
+      padding: 10px 8px;
+      text-align: center;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 13px;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+
+    .time-slot.selected {
+      background: linear-gradient(135deg, #f43f5e, #fb7185);
+      color: #ffffff;
+      border-color: #fb7185;
+      box-shadow: 0 0 16px rgba(244, 63, 94, 0.6);
+    }
+
+    /* SCENE 3: INTERACTIVE SEAT SELECTION */
+    #scene3 {
+      padding: 90px 100px 40px 100px;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .seat-screen-canvas {
+      width: 1100px;
+      text-align: center;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .curved-screen-bar {
+      width: 100%;
+      height: 10px;
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+      background: linear-gradient(90deg, rgba(244,63,94,0.1) 0%, rgba(244,63,94,1) 50%, rgba(244,63,94,0.1) 100%);
+      box-shadow: 0 -4px 35px rgba(244, 63, 94, 0.8), 0 0 60px rgba(56, 189, 248, 0.3);
+      margin-bottom: 12px;
+    }
+
+    .screen-label {
+      font-size: 14px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: #64748b;
+      font-weight: 800;
+    }
+
+    .seat-matrix-wrapper {
+      width: 1280px;
+      background: rgba(19, 23, 40, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 28px;
+      padding: 36px 48px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+      position: relative;
+    }
+
+    .seat-tiers-header {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 24px;
+    }
+
+    .tier-legend {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+
+    .seat-sample {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+    }
+
+    .seat-sample.vip { background: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+    .seat-sample.premium { background: #f43f5e; box-shadow: 0 0 10px rgba(244, 63, 94, 0.5); }
+    .seat-sample.standard { background: #38bdf8; }
+    .seat-sample.booked { background: #334155; }
+
+    .seat-rows-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .seat-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .row-letter {
+      width: 28px;
+      font-weight: 800;
+      color: #64748b;
+      font-size: 14px;
+      text-align: right;
+    }
+
+    .seats-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .aisle-gap {
+      width: 36px;
+    }
+
+    .seat-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: #ffffff;
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .seat-btn.vip { background: rgba(245, 158, 11, 0.25); border-color: rgba(245, 158, 11, 0.6); color: #fef08a; }
+    .seat-btn.premium { background: rgba(244, 63, 94, 0.25); border-color: rgba(244, 63, 94, 0.6); color: #fecdd3; }
+    .seat-btn.standard { background: rgba(56, 189, 248, 0.2); border-color: rgba(56, 189, 248, 0.5); color: #bae6fd; }
+    .seat-btn.booked { background: #1e2438; border-color: transparent; color: #475569; }
+
+    .seat-btn.selected {
+      background: linear-gradient(135deg, #f59e0b, #f43f5e) !important;
+      border-color: #ffffff !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.8), 0 0 40px rgba(244, 63, 94, 0.6);
+      transform: scale(1.18);
+      z-index: 5;
+    }
+
+    .seat-status-footer {
+      width: 1280px;
+      margin-top: 24px;
+      background: rgba(24, 29, 51, 0.95);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      border-radius: 20px;
+      padding: 20px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .status-seats-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fbbf24;
+    }
+
+    .status-desc {
+      font-size: 18px;
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+
+    .status-right {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .status-price-box {
+      text-align: right;
+    }
+
+    .price-label {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    .price-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 36px;
+      font-weight: 900;
+      color: #10b981;
+    }
+
+    .btn-checkout {
+      padding: 16px 36px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #f43f5e, #fb7185);
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 10px 30px rgba(244, 63, 94, 0.5);
+    }
+
+    /* Virtual Mouse Pointer */
+    .mouse-cursor {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      pointer-events: none;
+      z-index: 999;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.8));
+    }
+
+    /* SCENE 4: CHECKOUT & DIGITAL QR TICKET */
+    #scene4 {
+      padding: 100px 120px 40px 120px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .ticket-showcase-container {
+      display: flex;
+      gap: 50px;
+      align-items: center;
+      max-width: 1400px;
+    }
+
+    .ticket-left-info {
+      flex: 1;
+    }
+
+    .confirm-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 24px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    .ticket-heading {
+      font-family: 'Outfit', sans-serif;
+      font-size: 60px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+
+    .ticket-subtitle {
+      font-size: 22px;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    .ticket-perks-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .perk-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .perk-check {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #34d399;
+      font-weight: 900;
+      font-size: 16px;
+    }
+
+    /* DIGITAL BOARDING PASS CARD */
+    .digital-ticket-card {
+      width: 580px;
+      background: #131728;
+      border-radius: 28px;
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      overflow: hidden;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.8), 0 0 50px rgba(244, 63, 94, 0.25);
+      position: relative;
+    }
+
+    .ticket-header-strip {
+      background: linear-gradient(135deg, #f43f5e, #f59e0b);
+      padding: 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #ffffff;
+    }
+
+    .pass-type {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: 2px;
+    }
+
+    .pass-ref {
+      font-family: monospace;
+      font-size: 16px;
+      font-weight: 700;
+      background: rgba(0,0,0,0.25);
+      padding: 6px 14px;
+      border-radius: 8px;
+    }
+
+    .ticket-body {
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .ticket-movie-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 32px;
+      font-weight: 900;
+      color: #ffffff;
+    }
+
+    .ticket-specs-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      background: rgba(24, 29, 51, 0.8);
+      border-radius: 18px;
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .spec-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .spec-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #64748b;
+      font-weight: 800;
+    }
+
+    .spec-value {
+      font-size: 17px;
+      font-weight: 800;
+      color: #f1f5f9;
+    }
+
+    .spec-value.highlight {
+      color: #f59e0b;
+    }
+
+    .ticket-snack-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px dashed rgba(245, 158, 11, 0.35);
+      border-radius: 14px;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fef08a;
+    }
+
+    .ticket-qr-section {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      border-top: 2px dashed rgba(255, 255, 255, 0.12);
+      padding-top: 24px;
+    }
+
+    .qr-box {
+      width: 100px;
+      height: 100px;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-laser-scanner {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #f43f5e;
+      box-shadow: 0 0 10px #f43f5e;
+      top: 20%;
+    }
+
+    .qr-details {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .qr-hint {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .qr-verified {
+      font-size: 15px;
+      font-weight: 800;
+      color: #10b981;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* SCENE 5: TECH STACK & OUTRO */
+    #scene5 {
+      padding: 110px 100px 50px 100px;
+      justify-content: flex-start;
+      align-items: center;
+      text-align: center;
+    }
+
+    .stack-header-box {
+      margin-bottom: 40px;
+    }
+
+    .stack-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 64px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      color: #ffffff;
+      margin-bottom: 12px;
+    }
+
+    .stack-subtitle {
+      font-size: 22px;
+      color: #94a3b8;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .stack-cards-grid {
+      display: flex;
+      gap: 40px;
+      width: 1280px;
+      margin-bottom: 48px;
+    }
+
+    .stack-card {
+      flex: 1;
+      background: rgba(24, 29, 51, 0.85);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 40px;
+      text-align: left;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stack-card.front {
+      border-top: 4px solid #38bdf8;
+    }
+
+    .stack-card.back {
+      border-top: 4px solid #10b981;
+    }
+
+    .card-pillar-label {
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .stack-card.front .card-pillar-label { color: #38bdf8; }
+    .stack-card.back .card-pillar-label { color: #10b981; }
+
+    .stack-card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 36px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 24px;
+    }
+
+    .tech-pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .tech-pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .outro-callout-bar {
+      width: 1280px;
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.2), rgba(245, 158, 11, 0.15));
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      border-radius: 20px;
+      padding: 24px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .callout-bold {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: 1px;
+    }
+
+    .callout-sub {
+      font-size: 18px;
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient Lights -->
+  <div class="stage-background"></div>
+  <div class="grid-lines"></div>
+  <div class="light-cone"></div>
+
+  <!-- Persistent Header Bar -->
+  <div class="top-header">
+    <div class="brand-mark">
+      <div class="brand-icon-box">🎟️</div>
+      <div class="brand-text">
+        <span class="brand-title">YOZIGO</span>
+        <span class="brand-sub">CINEMAS</span>
+      </div>
+    </div>
+    <div class="badge-pill">
+      <span class="badge-live-dot"></span>
+      <span>FULL-STACK DEMO · 2026</span>
+    </div>
+  </div>
+
+  <!-- Virtual Animated Mouse Cursor -->
+  <svg id="mouseCursor" class="mouse-cursor" style="display:none;" viewBox="0 0 24 24" fill="none">
+    <path d="M5.5 3.5L18.5 13.5L12 14.5L15 21L12.5 22L9.5 15.5L5.5 19V3.5Z" fill="#f43f5e" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/>
+  </svg>
+
+  <!-- ==================== SCENE 1: THE HOOK ==================== -->
+  <div id="scene1" class="scene active">
+    <div class="hook-kicker">TIRED OF CLUNKY 2005 TICKET PORTALS?</div>
+    <h1 class="hook-title">
+      Experience Cinema Booking <br>
+      <span class="gradient-text-cinema">Reimagined for Speed & Elegance</span>
+    </h1>
+    <p class="hook-desc">
+      A high-performance movie booking platform with real-time seat matrices, dynamic showtimes, and instant digital QR ticketing.
+    </p>
+    <div class="hook-features-row">
+      <div class="hook-chip">⚡ Sub-50ms Response Time</div>
+      <div class="hook-chip">🎬 IMAX & Dolby Atmos Ready</div>
+      <div class="hook-chip">🛡️ Verified Digital QR Passes</div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENE 2: LIVE CATALOG ==================== -->
+  <div id="scene2" class="scene">
+    <div class="scene-heading-row">
+      <div>
+        <div class="section-eyebrow">
+          <span class="eyebrow-tag">EXPLORE MOVIES</span>
+          <span class="eyebrow-city">📍 Bengaluru · 14 Premier Multiplexes</span>
+        </div>
+        <h2 class="scene-title">Curated Blockbusters in 4K & IMAX</h2>
+        <p class="scene-subtitle">Instant schedule browsing with live format filters.</p>
+      </div>
+      <div class="filter-pills-row">
+        <span class="filter-pill active">All Movies</span>
+        <span class="filter-pill">IMAX 70MM</span>
+        <span class="filter-pill">Dolby Atmos</span>
+        <span class="filter-pill">Action / Sci-Fi</span>
+      </div>
+    </div>
+
+    <div class="cards-deck">
+      <!-- Card 1: The Dark Knight Rises (Featured) -->
+      <div class="movie-card featured" id="mcard1">
+        <div class="poster-img-wrap">
+          <img src="assets/dark_knight.jpg" alt="Dark Knight Rises" class="poster-img">
+          <div class="poster-gradient"></div>
+          <div class="rating-badge">★ 8.4</div>
+          <div class="format-badge">IMAX 70MM</div>
+        </div>
+        <div class="card-meta">
+          <div>
+            <div class="card-title">The Dark Knight Rises</div>
+            <div class="card-genre">Action · Drama · 2h 44m</div>
+          </div>
+          <div class="showtimes-row">
+            <div class="time-slot">01:30 PM</div>
+            <div class="time-slot selected">07:00 PM</div>
+            <div class="time-slot">10:30 PM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Interstellar -->
+      <div class="movie-card" id="mcard2">
+        <div class="poster-img-wrap">
+          <img src="assets/interstellar.jpg" alt="Interstellar" class="poster-img">
+          <div class="poster-gradient"></div>
+          <div class="rating-badge">★ 8.7</div>
+          <div class="format-badge">IMAX 2D</div>
+        </div>
+        <div class="card-meta">
+          <div>
+            <div class="card-title">Interstellar</div>
+            <div class="card-genre">Sci-Fi · Adventure · 2h 49m</div>
+          </div>
+          <div class="showtimes-row">
+            <div class="time-slot">11:00 AM</div>
+            <div class="time-slot">04:15 PM</div>
+            <div class="time-slot">09:00 PM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Fight Club -->
+      <div class="movie-card" id="mcard3">
+        <div class="poster-img-wrap">
+          <img src="assets/fight_club.jpg" alt="Fight Club" class="poster-img">
+          <div class="poster-gradient"></div>
+          <div class="rating-badge">★ 8.8</div>
+          <div class="format-badge">4K REMASTER</div>
+        </div>
+        <div class="card-meta">
+          <div>
+            <div class="card-title">Fight Club</div>
+            <div class="card-genre">Drama · Thriller · 2h 19m</div>
+          </div>
+          <div class="showtimes-row">
+            <div class="time-slot">02:00 PM</div>
+            <div class="time-slot">06:30 PM</div>
+            <div class="time-slot">10:45 PM</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: Iron Man -->
+      <div class="movie-card" id="mcard4">
+        <div class="poster-img-wrap">
+          <img src="assets/iron_man.jpg" alt="Iron Man" class="poster-img">
+          <div class="poster-gradient"></div>
+          <div class="rating-badge">★ 7.9</div>
+          <div class="format-badge">4DX 3D</div>
+        </div>
+        <div class="card-meta">
+          <div>
+            <div class="card-title">Iron Man</div>
+            <div class="card-genre">Action · Sci-Fi · 2h 06m</div>
+          </div>
+          <div class="showtimes-row">
+            <div class="time-slot">12:30 PM</div>
+            <div class="time-slot">05:00 PM</div>
+            <div class="time-slot">08:30 PM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENE 3: INTERACTIVE SEATS ==================== -->
+  <div id="scene3" class="scene">
+    <div class="seat-screen-canvas">
+      <div class="curved-screen-bar"></div>
+      <div class="screen-label">AUDITORIUM 1 · IMAX LASER DUAL SCREEN</div>
+    </div>
+
+    <div class="seat-matrix-wrapper">
+      <div class="seat-tiers-header">
+        <div class="tier-legend"><span class="seat-sample vip"></span> VIP Recliner (₹380)</div>
+        <div class="tier-legend"><span class="seat-sample premium"></span> Premium Club (₹280)</div>
+        <div class="tier-legend"><span class="seat-sample standard"></span> Standard (₹190)</div>
+        <div class="tier-legend"><span class="seat-sample booked"></span> Occupied</div>
+      </div>
+
+      <div class="seat-rows-container">
+        <!-- Row F: VIP -->
+        <div class="seat-row">
+          <span class="row-letter">F</span>
+          <div class="seats-group">
+            <div class="seat-btn vip">1</div>
+            <div class="seat-btn vip">2</div>
+            <div class="seat-btn vip">3</div>
+            <div class="seat-btn vip">4</div>
+          </div>
+          <div class="aisle-gap"></div>
+          <div class="seats-group">
+            <div class="seat-btn vip">5</div>
+            <div class="seat-btn vip">6</div>
+            <div class="seat-btn vip">7</div>
+            <div class="seat-btn vip">8</div>
+          </div>
+          <div class="aisle-gap"></div>
+          <div class="seats-group">
+            <div class="seat-btn vip">9</div>
+            <div class="seat-btn vip">10</div>
+          </div>
+        </div>
+
+        <!-- Row E: VIP -->
+        <div class="seat-row">
+          <span class="row-letter">E</span>
+          <div class="seats-group">
+            <div class="seat-btn vip">1</div>
+            <div class="seat-btn vip booked">2</div>
+            <div class="seat-btn vip booked">3</div>
+            <div class="seat-btn vip">4</div>
+          </div>
+          <div class="aisle-gap"></div>
+          <div class="seats-group">
+            <div class="seat-btn vip">5</div>
+            <div class="seat-btn vip">6</div>
+            <div class="seat-btn vip">7</div>
+            <div class="seat-btn vip">8</div>
+          </div>
+          <div class="aisle-gap"></div>
+          <div class="seats-group">
+            <div class="seat-btn vip">9</div>
+            <div class="seat-btn vip">10</div>
+          </div>
+        </div>
+
+        <!-- Row D: Premium (Interactive Target) -->
+        <div class="seat-row">
+          <span class="row-letter">D</span>
+          <div class="seats-group">
+            <div class="seat-btn premium">1</div>
+            <div class="seat-btn premium">2</div>
+            <div class="seat-btn premium">3</div>
+            <div class="seat-btn premium">4</div>
+          </div>
+          <div class="aisle-gap"></div>
+          <div class="seats-group">
+            <div class="seat-btn premium" id="seatD5">5</div>
+            <div class="seat-btn premium" id="seatD6">6</div>
+            <div class="seat-btn premium">7</div>
+            <div class="seat-btn premium">8</div>
+          </div>
+          <div class="aisle-gap"></div>
+          <div class="seats-group">
+            <div class="seat-btn premium booked">9</div>
+            <div class="seat-btn premium booked">10</div>
+          </div>
+        </div>
+
+        <!-- Row C: Premium -->
+        <div class="seat-row">
+          <span class="row-letter">C</span>
+          <div class="seats-group">
+            <div class="seat-btn premium booked">1</div>
+            <div class="seat-btn premium booked">2</div>
+            <div class="seat-btn premium">3</div>
+            <div class="seat-btn premium">4</div>
+          </div>
+          <div class="aisle-gap"></div>
+          <div class="seats-group">
+            <div class="seat-btn premium">5</div>
+            <div class="seat-btn premium">6</div>
+            <div class="seat-btn premium">7</div>
+            <div class="seat-btn premium">8</div>
+          </div>
+          <div class="aisle-gap"></div>
+          <div class="seats-group">
+            <div class="seat-btn premium">9</div>
+            <div class="seat-btn premium">10</div>
+          </div>
+        </div>
+
+        <!-- Row B: Standard -->
+        <div class="seat-row">
+          <span class="row-letter">B</span>
+          <div class="seats-group">
+            <div class="seat-btn standard">1</div>
+            <div class="seat-btn standard">2</div>
+            <div class="seat-btn standard">3</div>
+            <div class="seat-btn standard">4</div>
+          </div>
+          <div class="aisle-gap"></div>
+          <div class="seats-group">
+            <div class="seat-btn standard booked">5</div>
+            <div class="seat-btn standard booked">6</div>
+            <div class="seat-btn standard">7</div>
+            <div class="seat-btn standard">8</div>
+          </div>
+          <div class="aisle-gap"></div>
+          <div class="seats-group">
+            <div class="seat-btn standard">9</div>
+            <div class="seat-btn standard">10</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Status Footer Bar -->
+    <div class="seat-status-footer">
+      <div class="status-left">
+        <div class="status-seats-pill" id="selectedSeatsPill">
+          <span>💺</span>
+          <span id="selectedSeatsText">2 Seats Selected (D5, D6)</span>
+        </div>
+        <div class="status-desc">Row D · Premium Lounge · Screen 1</div>
+      </div>
+      <div class="status-right">
+        <div class="status-price-box">
+          <div class="price-label">TOTAL AMOUNT</div>
+          <div class="price-value" id="priceValueDisplay">₹760.00</div>
+        </div>
+        <button class="btn-checkout">PROCEED TO CHECKOUT →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENE 4: CHECKOUT & QR TICKET ==================== -->
+  <div id="scene4" class="scene">
+    <div class="ticket-showcase-container">
+      <div class="ticket-left-info">
+        <div class="confirm-badge">
+          <span>✓</span>
+          <span>BOOKING VERIFIED & CONFIRMED</span>
+        </div>
+        <h2 class="ticket-heading">
+          Instant QR Pass.<br>
+          <span class="gradient-text-cinema">Zero Paperwork, Zero Wait.</span>
+        </h2>
+        <p class="ticket-subtitle">
+          The booking pipeline commits transaction records instantly, synchronizing seat locks and emitting high-resolution QR verification codes.
+        </p>
+        <div class="ticket-perks-list">
+          <div class="perk-item">
+            <span class="perk-check">✓</span>
+            <span>Real-time Concurrency & Double-Booking Protection</span>
+          </div>
+          <div class="perk-item">
+            <span class="perk-check">✓</span>
+            <span>Add-on Food & Beverage Pre-Order Integration</span>
+          </div>
+          <div class="perk-item">
+            <span class="perk-check">✓</span>
+            <span>Gate Scanner Validation via Signed JWT Hash</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Digital Ticket Card -->
+      <div class="digital-ticket-card">
+        <div class="ticket-header-strip">
+          <div class="pass-type">YOZIGO CINEMA PASS</div>
+          <div class="pass-ref">#YZG-94827</div>
+        </div>
+        <div class="ticket-body">
+          <div>
+            <div class="ticket-movie-title">The Dark Knight Rises</div>
+            <div style="font-size:15px; color:#94a3b8; margin-top:4px;">Christopher Nolan · IMAX 70MM Experience</div>
+          </div>
+
+          <div class="ticket-specs-grid">
+            <div class="spec-block">
+              <span class="spec-title">DATE & TIME</span>
+              <span class="spec-value">TODAY · 7:00 PM</span>
+            </div>
+            <div class="spec-block">
+              <span class="spec-title">SEATS</span>
+              <span class="spec-value highlight">D5, D6 (VIP)</span>
+            </div>
+            <div class="spec-block">
+              <span class="spec-title">AUDITORIUM</span>
+              <span class="spec-value">SCREEN 1</span>
+            </div>
+          </div>
+
+          <div class="ticket-snack-row">
+            <span style="font-size:24px;">🍿</span>
+            <div>
+              <div style="color:#ffffff;">Gourmet Cinema Combo Added</div>
+              <div style="font-size:13px; color:#fef08a;">1x Large Caramel Popcorn + 2x Chilled Pepsi Max</div>
+            </div>
+          </div>
+
+          <div class="ticket-qr-section">
+            <div class="qr-box">
+              <!-- Inline QR Code SVG Matrix -->
+              <svg width="84" height="84" viewBox="0 0 29 29" fill="#080a11">
+                <path d="M0 0h7v7H0zm2 2h3v3H2zM0 22h7v7H0zm2 2h3v3H2zM22 0h7v7h-7zm2 2h3v3h-3zM8 2h2v2H8zm3 0h2v4h-2zm4 0h1v3h-1zm3 1h2v2h-2zm-9 3h3v2h-3zm5 0h2v1h-2zm3 0h3v2h-3zM9 9h2v2H9zm4 0h1v2h-1zm3 0h3v1h-3zm-7 3h4v1h-4zm5 0h3v2h-3zm4 0h2v1h-2zm-9 3h2v1H9zm4 0h3v2h-3zm4 0h2v2h-2zm-7 3h2v2h-2zm3 0h3v2h-3zm-7 3h2v1H8zm4 0h2v3h-2zm3 0h3v2h-3zm-6 2h1v2H9zm7 0h2v2h-2zm3 0h3v2h-3zm-9 3h3v2H8zm5 0h2v2h-2zm4 0h2v2h-2z"/>
+              </svg>
+              <div class="qr-laser-scanner" id="qrScannerLine"></div>
+            </div>
+            <div class="qr-details">
+              <div class="qr-verified">● VALID GATE PASS</div>
+              <div class="qr-hint">Scan at Usher Turnstile · Screen 1 Entrance</div>
+              <div style="font-size: 13px; color: #64748b; font-family: monospace; margin-top: 4px;">AUTH-HASH: 9a7f-43e8-bc12</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENE 5: TECH STACK & OUTRO ==================== -->
+  <div id="scene5" class="scene">
+    <div class="stack-header-box">
+      <div class="section-eyebrow" style="justify-content:center;">
+        <span class="eyebrow-tag">FULL-STACK ARCHITECTURE</span>
+      </div>
+      <h2 class="stack-title">Engineered with Modern Technologies</h2>
+      <p class="stack-subtitle">
+        Built with clean architecture, strict typing, and high-throughput Python backend services.
+      </p>
+    </div>
+
+    <div class="stack-cards-grid">
+      <!-- Frontend Card -->
+      <div class="stack-card front">
+        <div class="card-pillar-label">CLIENT ARCHITECTURE</div>
+        <div class="stack-card-title">Frontend Stack</div>
+        <div class="tech-pill-list">
+          <div class="tech-pill">⚛️ React 18</div>
+          <div class="tech-pill">🟦 TypeScript</div>
+          <div class="tech-pill">⚡ Vite</div>
+          <div class="tech-pill">🎨 Vanilla Cinema CSS</div>
+          <div class="tech-pill">🔄 State Workflows</div>
+          <div class="tech-pill">📱 Responsive UI</div>
+        </div>
+      </div>
+
+      <!-- Backend Card -->
+      <div class="stack-card back">
+        <div class="card-pillar-label">SERVER INFRASTRUCTURE</div>
+        <div class="stack-card-title">Backend Services</div>
+        <div class="tech-pill-list">
+          <div class="tech-pill">🚀 FastAPI</div>
+          <div class="tech-pill">🐍 Python 3.12</div>
+          <div class="tech-pill">🗄️ SQLite / SQLAlchemy</div>
+          <div class="tech-pill">🔐 JWT Authentication</div>
+          <div class="tech-pill">📡 REST Endpoints</div>
+          <div class="tech-pill">🧪 Automated Pytest</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="outro-callout-bar">
+      <div>
+        <div class="callout-bold">YOZIGO CINEMAS · FULL-STACK DEMO</div>
+        <div class="callout-sub">Ready for technical review & code walkthrough.</div>
+      </div>
+      <div class="badge-pill" style="background:#f43f5e; border-color:#fb7185; color:#ffffff;">
+        <span>PROJECT READY 🍿</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline Seek Script -->
+  <script>
+    const scene1 = document.getElementById('scene1');
+    const scene2 = document.getElementById('scene2');
+    const scene3 = document.getElementById('scene3');
+    const scene4 = document.getElementById('scene4');
+    const scene5 = document.getElementById('scene5');
+    const mouseCursor = document.getElementById('mouseCursor');
+    const seatD5 = document.getElementById('seatD5');
+    const seatD6 = document.getElementById('seatD6');
+    const selectedSeatsText = document.getElementById('selectedSeatsText');
+    const priceValueDisplay = document.getElementById('priceValueDisplay');
+    const qrScannerLine = document.getElementById('qrScannerLine');
+
+    // Transitions Timeline:
+    // Scene 1: 0.0s -> 3.2s
+    // Scene 2: 3.2s -> 9.0s
+    // Scene 3: 9.0s -> 15.2s
+    // Scene 4: 15.2s -> 21.0s
+    // Scene 5: 21.0s -> 26.0s
+
+    window.seek = function(t) {
+      // Helper clamp
+      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+      // Reset all scenes
+      [scene1, scene2, scene3, scene4, scene5].forEach(s => {
+        s.classList.remove('active');
+        s.style.display = 'none';
+        s.style.opacity = '0';
+      });
+      mouseCursor.style.display = 'none';
+
+      if (t < 3.2) {
+        // SCENE 1: The Hook
+        scene1.style.display = 'flex';
+        scene1.classList.add('active');
+        const prog = t / 3.2;
+        scene1.style.transform = `scale(${1 + prog * 0.03})`;
+        scene1.style.opacity = t < 2.9 ? '1' : `${clamp((3.2 - t) / 0.3, 0, 1)}`;
+      } else if (t < 9.0) {
+        // SCENE 2: Movie Catalog
+        scene2.style.display = 'flex';
+        scene2.classList.add('active');
+        const prog = (t - 3.2) / 5.8;
+        scene2.style.transform = `scale(1)`;
+        scene2.style.opacity = t < 8.7 ? '1' : `${clamp((9.0 - t) / 0.3, 0, 1)}`;
+
+        // subtle horizontal pan of cards deck
+        const deck = document.querySelector('.cards-deck');
+        if (deck) {
+          const shift = (prog - 0.5) * 40;
+          deck.style.transform = `translateX(${-shift}px)`;
+        }
+      } else if (t < 15.2) {
+        // SCENE 3: Interactive Seat Selection
+        scene3.style.display = 'flex';
+        scene3.classList.add('active');
+        const s3Time = t - 9.0;
+        scene3.style.opacity = t < 14.9 ? '1' : `${clamp((15.2 - t) / 0.3, 0, 1)}`;
+
+        // Mouse animation
+        mouseCursor.style.display = 'block';
+
+        if (s3Time < 0.8) {
+          const p = s3Time / 0.8;
+          mouseCursor.style.left = `${1200 - p * 290}px`;
+          mouseCursor.style.top = `${700 - p * 150}px`;
+          seatD5.classList.remove('selected');
+          seatD6.classList.remove('selected');
+          selectedSeatsText.textContent = '0 Seats Selected';
+          priceValueDisplay.textContent = '₹0.00';
+        } else if (s3Time < 1.6) {
+          mouseCursor.style.left = `910px`;
+          mouseCursor.style.top = `550px`;
+          seatD5.classList.add('selected');
+          seatD6.classList.remove('selected');
+          selectedSeatsText.textContent = '1 Seat Selected (D5)';
+          priceValueDisplay.textContent = '₹380.00';
+        } else if (s3Time < 2.4) {
+          const p = (s3Time - 1.6) / 0.8;
+          mouseCursor.style.left = `${910 + p * 56}px`;
+          mouseCursor.style.top = `550px`;
+          seatD5.classList.add('selected');
+          if (s3Time >= 2.0) {
+            seatD6.classList.add('selected');
+            selectedSeatsText.textContent = '2 Seats Selected (D5, D6)';
+            priceValueDisplay.textContent = '₹760.00';
+          }
+        } else {
+          seatD5.classList.add('selected');
+          seatD6.classList.add('selected');
+          selectedSeatsText.textContent = '2 Seats Selected (D5, D6)';
+          priceValueDisplay.textContent = '₹760.00';
+          const p = clamp((s3Time - 2.4) / 1.5, 0, 1);
+          mouseCursor.style.left = `${966 + p * 420}px`;
+          mouseCursor.style.top = `${550 + p * 215}px`;
+        }
+      } else if (t < 21.0) {
+        // SCENE 4: Checkout & Ticket
+        scene4.style.display = 'flex';
+        scene4.classList.add('active');
+        const s4Time = t - 15.2;
+        scene4.style.opacity = t < 20.7 ? '1' : `${clamp((21.0 - t) / 0.3, 0, 1)}`;
+
+        // QR Laser Scanner vertical oscillating animation
+        if (qrScannerLine) {
+          const osc = (Math.sin(s4Time * 4) + 1) / 2;
+          qrScannerLine.style.top = `${15 + osc * 70}%`;
+        }
+      } else {
+        // SCENE 5: Tech Stack & Outro
+        scene5.style.display = 'flex';
+        scene5.classList.add('active');
+        scene5.style.transform = `scale(1)`;
+        if (t > 25.2) {
+          const fade = (26.0 - t) / 0.8;
+          scene5.style.opacity = `${clamp(fade, 0, 1)}`;
+        } else {
+          scene5.style.opacity = '1';
+        }
+      }
+    };
+
+    // Initialize frame 0
+    window.seek(0.0);
+  </script>
+</body>
+</html>

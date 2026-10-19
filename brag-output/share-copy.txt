@@ -1,0 +1,5 @@
+🍿 Just built Yozigo Cinemas: A modern, ultra-responsive movie booking system built with React 18, TypeScript, and FastAPI.
+
+Featuring real-time tiered seat selection with zero latency, dynamic multiplex showtimes, gourmet add-ons, and instant digital QR ticketing.
+
+Check out the full walkthrough and code demo: https://github.com/Sivakumar-Pandian/movie-booking-system
