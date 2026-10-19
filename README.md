@@ -167,10 +167,24 @@ The API creates the customer demo account on first start. Create the admin accou
 
 The admin seed command requires `ADMIN_EMAIL` and `ADMIN_PASSWORD`. It creates that account or updates the matching account to the `ADMIN` role. The application does not automatically create a known-password admin at startup. The commands above explicitly target the local SQLite database; verify `DATABASE_URL` and use a unique password before running the seed for any shared or production environment.
 
+### Seed an admin account in Vercel's database
+
+Run this only when you intend to create or update an admin in the deployed database. Use a strong, unique password rather than the local demo password:
+
+```bash
+# From the repository root. Vercel injects production secrets directly into the process.
+ADMIN_EMAIL=admin@yozigo.com \
+ADMIN_PASSWORD='replace-with-a-unique-password' \
+ADMIN_FULL_NAME='Yozigo Admin' \
+vercel env run --environment production --cwd backend -- .venv/bin/python -m app.seed_admin
+```
+
+The seed command connects using Vercel's production `DATABASE_URL` and applies the legacy `users.role` compatibility migration before writing the account. Run it once per database/environment. `vercel env pull` may replace inaccessible secrets with placeholders; use `vercel env run` for this operation.
+
 ## ✅ Task Flow Coverage
 
 - Flows 1–6: customer registration/JWT authentication, dynamic movie and future-showtime data, an 8×10 live seat map, five-minute holds, mock payment confirmation/failure, protected booking history, and cancellation more than two hours before a show.
-- Flow 7: protected admin APIs for movie CRUD, show creation/deletion, overlap validation, and per-show occupancy/revenue reporting.
+- Flow 7: the admin dashboard provides movie add/edit/delete only. Protected showtime creation/deletion, overlap validation, and occupancy/revenue reports remain available through admin APIs, not the dashboard.
 - Flow 8: cancellation is implemented.
 - Flow 9: admin reporting API is implemented.
 - Flow 10: the customer seat map polls the API every five seconds.
