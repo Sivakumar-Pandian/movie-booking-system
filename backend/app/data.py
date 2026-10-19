@@ -16,7 +16,7 @@ SAMPLE_MOVIES: list[MovieResponse] = [
         cast=["Thalapathy Vijay", "Sanjay Dutt", "Trisha Krishnan", "Arjun Sarja"],
         synopsis="Parthiban, a mild-mannered cafe owner in Himachal Pradesh, is thrust into a violent underworld when ruthless drug cartels mistake him for feared gangster Leo Das.",
         posterUrl="https://image.tmdb.org/t/p/w500/zXuGXX6IjWRVjHQqMaxaobqzD8O.jpg",
-        backdropUrl="https://image.tmdb.org/t/p/original/MSNYxWe4u4en9vQ3oZIKQWKYHu.jpg",
+        backdropUrl="https://www.wallsnapy.com/img_gallery/vijay-leo-movie-stills-hd-wallpapers-1200px-6145835.jpg",
         isFeatured=True,
         trailerYoutubeId="Po3jStA673E",
     ),
