@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime
 from typing import List
 
 from sqlalchemy.orm import Session, joinedload
@@ -6,7 +7,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.db_models import BookedSeat, Movie, Showtime
 from app.models import MovieResponse, ShowtimeSlotResponse, TheaterShowtimesResponse
 
-SEAT_CAPACITY = 60
+SEAT_CAPACITY = 80
 
 
 def movie_to_response(movie: Movie) -> MovieResponse:
@@ -52,6 +53,18 @@ def theaters_for_movie(
         .order_by(Showtime.theater_id, Showtime.time)
         .all()
     )
+    # Do not advertise shows that have already begun. Legacy non-ISO seed values
+    # are retained only for backward compatibility and are omitted.
+    now = datetime.now()
+    future_slots = []
+    for slot in slots:
+        try:
+            starts_at = datetime.strptime(f"{slot.show_date} {slot.time}", "%Y-%m-%d %I:%M %p")
+            if starts_at > now:
+                future_slots.append(slot)
+        except ValueError:
+            continue
+    slots = future_slots
     if not slots:
         return []
 
@@ -88,6 +101,7 @@ def theaters_for_movie(
                 format=slot.format,
                 status=occupancy_status(booked_counts[slot.id]),
                 price=slot.price,
+                available_seats=max(0, SEAT_CAPACITY - booked_counts[slot.id]),
             )
         )
     return [grouped[theater_id] for theater_id in order]

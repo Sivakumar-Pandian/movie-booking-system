@@ -34,7 +34,7 @@ class MovieResponse(BaseModel):
 # --- Auth Models ---
 class UserRegister(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=6, description="Password at least 6 characters")
+    password: str = Field(..., min_length=8, description="Password at least 8 characters")
     full_name: str = Field(..., min_length=2, description="User full display name")
 
 
@@ -49,6 +49,7 @@ class UserResponse(BaseModel):
     id: int
     email: str
     full_name: str
+    role: str
     created_at: datetime
 
 
@@ -65,6 +66,7 @@ class ShowtimeSlotResponse(BaseModel):
     format: str
     status: Literal["Available", "Filling Fast", "Almost Full"]
     price: int
+    available_seats: int = 80
 
 
 class TheaterShowtimesResponse(BaseModel):
@@ -78,6 +80,18 @@ class TheaterShowtimesResponse(BaseModel):
 class ShowtimeSeatsResponse(BaseModel):
     showtime_id: str
     booked_seats: List[str]
+    held_seats: List[str] = []
+
+
+class HoldCreateRequest(BaseModel):
+    showtime_id: str
+    seats: List[str] = Field(..., min_length=1, max_length=6)
+
+
+class HoldResponse(BaseModel):
+    showtime_id: str
+    seats: List[str]
+    expires_at: datetime
 
 
 # --- Booking Models ---
@@ -97,6 +111,55 @@ class BookingCreateRequest(BaseModel):
     subtotal: Optional[int] = Field(default=None, gt=0)
     convenience_fee: Optional[int] = Field(default=None, ge=0)
     total_amount: Optional[int] = Field(default=None, gt=0)
+
+
+class PaymentRequest(BaseModel):
+    showtime_id: str
+    seats: List[str] = Field(..., min_length=1, max_length=6)
+    payment_method: str = "upi"
+    success: bool = True
+
+
+class CancelBookingResponse(BaseModel):
+    booking_ref: str
+    payment_status: str
+    detail: str
+
+
+class MovieUpsert(BaseModel):
+    id: str = Field(..., min_length=1, max_length=50)
+    title: str = Field(..., min_length=1)
+    duration: str = Field(..., description="Runtime such as '2h 30m'")
+    language: str
+    certification: str
+    poster_url: str
+    synopsis: str = ""
+    rating: float = 0
+    votes: str = "0"
+    genre: List[str] = []
+    formats: List[str] = []
+    release_year: int = 2026
+
+
+class ShowtimeCreate(BaseModel):
+    id: str = Field(..., min_length=1, max_length=80)
+    movie_id: str
+    theater_id: str
+    show_date: str = Field(..., description="ISO date: YYYY-MM-DD")
+    time: str = Field(..., description="12-hour time, e.g. 07:30 PM")
+    format: str = "2D"
+    price: int = Field(..., gt=0)
+
+
+class AdminShowReport(BaseModel):
+    showtime_id: str
+    movie_title: str
+    show_date: str
+    time: str
+    booked_seats: int
+    capacity: int = 80
+    occupancy_percent: float
+    total_collected: int
 
 
 class BookingResponse(BaseModel):

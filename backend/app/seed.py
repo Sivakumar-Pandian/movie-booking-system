@@ -1,6 +1,8 @@
 import json
+from datetime import date, timedelta
 from sqlalchemy.orm import Session
-from app.db_models import Movie, Theater, Showtime
+from app.auth import hash_password
+from app.db_models import Movie, Theater, Showtime, User
 from app.data import SAMPLE_MOVIES
 
 SAMPLE_THEATERS_SEED = [
@@ -45,6 +47,16 @@ SAMPLE_THEATERS_SEED = [
 
 def seed_database_if_empty(db: Session):
     """Seed or update movies, theaters, and showtimes."""
+    # Demo accounts are explicit seed-only accounts; public registration is always CUSTOMER.
+    demo_accounts = [
+        ("customer@yozigo.test", "DemoCustomer2026!", "Demo Customer", "CUSTOMER"),
+        ("admin@yozigo.test", "DemoAdmin2026!", "Yozigo Admin", "ADMIN"),
+    ]
+    for email, password, name, role in demo_accounts:
+        if not db.query(User).filter(User.email == email).first():
+            db.add(User(email=email, hashed_password=hash_password(password), full_name=name, role=role))
+    db.commit()
+
     # 1. Seed or Update Movies
     for m in SAMPLE_MOVIES:
         existing = db.query(Movie).filter(Movie.id == m.id).first()
@@ -103,16 +115,13 @@ def seed_database_if_empty(db: Session):
 
     # 3. Seed Showtimes for all movies and dates d1..d5
     existing_showtime_ids = {row[0] for row in db.query(Showtime.id).all()}
-    dates = ["d1", "d2", "d3", "d4", "d5"]
+    dates = [(date.today() + timedelta(days=offset)).isoformat() for offset in range(5)]
     new_showtimes = []
     for m in SAMPLE_MOVIES:
         for th in SAMPLE_THEATERS_SEED:
             for st in th["showtimes"]:
                 for dt in dates:
-                    if m.id == "m1" and dt == "d1":
-                        st_id = st["id"]
-                    else:
-                        st_id = f"{m.id}_{dt}_{st['id']}"
+                    st_id = f"{m.id}_{dt}_{st['id']}"
 
                     if st_id not in existing_showtime_ids:
                         new_showtimes.append(

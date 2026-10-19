@@ -2,6 +2,7 @@ export interface AuthUser {
   id: number;
   email: string;
   full_name: string;
+  role: 'CUSTOMER' | 'ADMIN';
   created_at: string;
 }
 

@@ -51,6 +51,41 @@ export async function fetchShowtimeBookedSeats(showtimeId: string): Promise<stri
   }
 }
 
+export interface SeatAvailability {
+  booked: string[];
+  held: string[];
+}
+
+export async function fetchSeatAvailability(showtimeId: string): Promise<SeatAvailability> {
+  const res = await fetch(`${API_BASE_URL}/api/showtimes/${showtimeId}/seats`);
+  if (!res.ok) throw new Error('Unable to refresh seat availability.');
+  const data = await res.json();
+  return { booked: data.booked_seats ?? [], held: data.held_seats ?? [] };
+}
+
+export async function createSeatHold(showtimeId: string, seats: string[]) {
+  const token = getStoredToken();
+  if (!token) throw new Error('Please sign in before holding seats.');
+  const res = await fetch(`${API_BASE_URL}/api/holds`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ showtime_id: showtimeId, seats }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail ?? 'Unable to hold the selected seats.');
+  return data as { showtime_id: string; seats: string[]; expires_at: string };
+}
+
+export async function confirmHeldPayment(showtimeId: string, seats: string[], paymentMethod: string) {
+  const token = getStoredToken();
+  const res = await fetch(`${API_BASE_URL}/api/payments`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ showtime_id: showtimeId, seats, payment_method: paymentMethod, success: true }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail ?? 'Unable to confirm payment.');
+  return data as ApiBookingRecord;
+}
+
 export async function createRealBooking(payload: CreateBookingPayload): Promise<ApiBookingRecord> {
   const token = getStoredToken();
   if (!token) {
@@ -95,4 +130,15 @@ export async function fetchUserBookings(): Promise<ApiBookingRecord[]> {
   }
 
   return await res.json();
+}
+
+export async function cancelBooking(bookingRef: string): Promise<void> {
+  const token = getStoredToken();
+  const res = await fetch(`${API_BASE_URL}/api/bookings/${bookingRef}/cancel`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail ?? 'Unable to cancel this booking.');
+  }
 }

@@ -132,7 +132,13 @@ def test_booking_and_double_booking_prevention():
     ).json()
     token2 = buyer2["access_token"]
 
-    showtime_id = "st-1"
+    # Use a seeded future showtime instead of relying on an old fixed ID.
+    dates_res = client.get("/api/movies/m1/show-dates")
+    assert dates_res.status_code == 200
+    show_date = dates_res.json()[0]
+    theaters_res = client.get(f"/api/movies/m1/theaters?date={show_date}")
+    assert theaters_res.status_code == 200
+    showtime_id = theaters_res.json()[0]["showtimes"][0]["id"]
 
     # Buyer 1 books seats A1 and A2
     booking_payload = {

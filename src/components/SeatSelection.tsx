@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { BookingSelection } from '../types/booking';
 import { INITIAL_SEAT_LAYOUT } from '../data/seats';
-import { fetchShowtimeBookedSeats } from '../services/bookingApi';
+import { createSeatHold, fetchSeatAvailability } from '../services/bookingApi';
+import type { AuthUser } from '../types/auth';
 
 interface SeatSelectionProps {
   booking: BookingSelection;
@@ -9,6 +10,9 @@ interface SeatSelectionProps {
   onToggleSeat: (seatId: string) => void;
   onBackToShowtimes: () => void;
   onProceedToSummary: () => void;
+  currentUser: AuthUser | null;
+  onRequestAuth: () => void;
+  onHoldCreated: (expiresAt: string) => void;
 }
 
 export const SeatSelection = ({
@@ -17,27 +21,38 @@ export const SeatSelection = ({
   onToggleSeat,
   onBackToShowtimes,
   onProceedToSummary,
+  currentUser,
+  onRequestAuth,
+  onHoldCreated,
 }: SeatSelectionProps) => {
   const { movie, date, theater, showtime } = booking;
   const [liveBookedSeats, setLiveBookedSeats] = useState<string[]>([]);
+  const [liveHeldSeats, setLiveHeldSeats] = useState<string[]>([]);
   const [loadingLiveSeats, setLoadingLiveSeats] = useState<boolean>(true);
+  const [holdError, setHoldError] = useState<string | null>(null);
+  const [isHolding, setIsHolding] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
 
   // Fetch live confirmed booked seats from backend database
   useEffect(() => {
     let isCurrent = true;
     setLoadingLiveSeats(true);
-    fetchShowtimeBookedSeats(showtime.id)
+    const refresh = () => fetchSeatAvailability(showtime.id)
       .then((booked) => {
         if (isCurrent) {
-          setLiveBookedSeats(booked);
+          setLiveBookedSeats(booked.booked);
+          setLiveHeldSeats(booked.held);
           setLoadingLiveSeats(false);
         }
       })
       .catch(() => {
         if (isCurrent) setLoadingLiveSeats(false);
       });
+    refresh();
+    const polling = window.setInterval(refresh, 5000);
     return () => {
       isCurrent = false;
+      window.clearInterval(polling);
     };
   }, [showtime.id]);
 
@@ -49,8 +64,21 @@ export const SeatSelection = ({
   // Guard: Proceed only if at least one seat is selected
   const handleContinue = () => {
     if (seatCount === 0) return;
-    onProceedToSummary();
+    if (!currentUser) { onRequestAuth(); return; }
+    setIsHolding(true); setHoldError(null);
+    createSeatHold(showtime.id, selectedSeats).then((hold) => {
+      setSecondsLeft(Math.max(0, Math.ceil((new Date(hold.expires_at).getTime() - Date.now()) / 1000)));
+      onHoldCreated(hold.expires_at);
+      onProceedToSummary();
+    }).catch((error: unknown) => setHoldError(error instanceof Error ? error.message : 'Unable to hold seats.'))
+      .finally(() => setIsHolding(false));
   };
+
+  useEffect(() => {
+    if (secondsLeft === null) return;
+    const timer = window.setInterval(() => setSecondsLeft((value) => value === null ? null : Math.max(0, value - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [secondsLeft !== null]);
 
   return (
     <div className="seat-selection-view">
@@ -112,7 +140,7 @@ export const SeatSelection = ({
                 {/* Left Wing Seats (Seats 1 to 5) */}
                 <div className="seat-wing left-wing">
                   {seatRow.seats.slice(0, 5).map((seat) => {
-                    const isBooked = seat.isUnavailable || liveBookedSeats.includes(seat.id);
+                    const isBooked = seat.isUnavailable || liveBookedSeats.includes(seat.id) || liveHeldSeats.includes(seat.id);
                     const isSelected = selectedSeats.includes(seat.id);
                     const seatStatusClass = isBooked
                       ? 'seat-unavailable'
@@ -126,7 +154,7 @@ export const SeatSelection = ({
                         type="button"
                         disabled={isBooked}
                         aria-pressed={isSelected}
-                        aria-label={`Seat ${seat.id}, ${isBooked ? 'Unavailable' : isSelected ? 'Selected' : 'Available'}`}
+                        aria-label={`Seat ${seat.id}, ${liveHeldSeats.includes(seat.id) ? 'Held' : isBooked ? 'Booked' : isSelected ? 'Selected' : 'Available'}`}
                         className={`interactive-seat-btn ${seatStatusClass}`}
                         onClick={() => {
                           if (!isBooked) {
@@ -148,7 +176,7 @@ export const SeatSelection = ({
                 {/* Right Wing Seats (Seats 6 to 10) */}
                 <div className="seat-wing right-wing">
                   {seatRow.seats.slice(5, 10).map((seat) => {
-                    const isBooked = seat.isUnavailable || liveBookedSeats.includes(seat.id);
+                    const isBooked = seat.isUnavailable || liveBookedSeats.includes(seat.id) || liveHeldSeats.includes(seat.id);
                     const isSelected = selectedSeats.includes(seat.id);
                     const seatStatusClass = isBooked
                       ? 'seat-unavailable'
@@ -185,7 +213,7 @@ export const SeatSelection = ({
 
         {/* Milestone Note */}
         <p className="seat-disclaimer-note">
-          * Note: Unavailable seats are sample frontend data. Real seat persistence will connect with the backend in future milestones.
+          Seat availability refreshes automatically every 5 seconds.
         </p>
       </div>
 
@@ -227,15 +255,17 @@ export const SeatSelection = ({
 
             <button
               type="button"
-              disabled={seatCount === 0}
+              disabled={seatCount === 0 || isHolding}
               className="btn btn-primary btn-lg continue-seats-btn"
               onClick={handleContinue}
             >
-              <span>Continue ({seatCount}) →</span>
+              <span>{isHolding ? 'Holding seats...' : `Continue (${seatCount}) →`}</span>
             </button>
           </div>
         </div>
       </aside>
+      {holdError && <p className="seat-selection-limit" role="alert">{holdError}</p>}
+      {secondsLeft !== null && <p className="seat-selection-limit">Seat hold: {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}</p>}
     </div>
   );
 };

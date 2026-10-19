@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ApiBookingRecord } from '../services/bookingApi';
-import { fetchUserBookings } from '../services/bookingApi';
+import { cancelBooking, fetchUserBookings } from '../services/bookingApi';
 import type { AuthUser } from '../types/auth';
 
 interface MyBookingsModalProps {
@@ -43,6 +43,11 @@ export const MyBookingsModal = ({
   }, [isOpen, currentUser]);
 
   if (!isOpen) return null;
+
+  const handleCancel = async (bookingRef: string) => {
+    try { await cancelBooking(bookingRef); await loadBookings(); }
+    catch (err: unknown) { setError(err instanceof Error ? err.message : 'Unable to cancel booking.'); }
+  };
 
   return (
     <div className="bookings-modal-overlay" role="dialog" aria-modal="true">
@@ -142,6 +147,11 @@ export const MyBookingsModal = ({
                     <span className="ticket-method-tag">
                       Via {b.payment_method.toUpperCase()}
                     </span>
+                    {b.payment_status !== 'CANCELLED' && (
+                      <button type="button" className="btn btn-outline" onClick={() => void handleCancel(b.booking_ref)}>
+                        Cancel booking
+                      </button>
+                    )}
                   </div>
                 </article>
               ))}

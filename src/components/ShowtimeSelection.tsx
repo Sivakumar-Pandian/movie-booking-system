@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Movie } from '../types/movie';
 import type { ShowDate, Theater, Showtime } from '../types/booking';
-import { SAMPLE_SHOW_DATES, SAMPLE_THEATERS } from '../data/showtimes';
+import { fetchShowDates, fetchTheatersForMovie } from '../services/movieApi';
 
 interface ShowtimeSelectionProps {
   movie: Movie;
@@ -21,12 +21,29 @@ export const ShowtimeSelection = ({
   onBackToListing,
   onContinueToSeats,
 }: ShowtimeSelectionProps) => {
-  // State for user's interactive choices
-  const [selectedDate, setSelectedDate] = useState<ShowDate>(SAMPLE_SHOW_DATES[0]);
-  const [selectedTheater, setSelectedTheater] = useState<Theater>(SAMPLE_THEATERS[0]);
-  const [selectedShowtime, setSelectedShowtime] = useState<Showtime>(
-    SAMPLE_THEATERS[0].showtimes[0]
-  );
+  const [dates, setDates] = useState<ShowDate[]>([]);
+  const [theaters, setTheaters] = useState<Theater[]>([]);
+  const [selectedDate, setSelectedDate] = useState<ShowDate | null>(null);
+  const [selectedTheater, setSelectedTheater] = useState<Theater | null>(null);
+  const [selectedShowtime, setSelectedShowtime] = useState<Showtime | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchShowDates(movie.id).then((items) => {
+      const mapped = items.map((iso) => {
+        const value = new Date(`${iso}T12:00:00`);
+        return { id: iso, label: value.toLocaleDateString('en-IN', { weekday: 'short' }), day: String(value.getDate()), month: value.toLocaleDateString('en-IN', { month: 'short' }), fullDate: value.toLocaleDateString('en-IN', { dateStyle: 'full' }) };
+      });
+      setDates(mapped); setSelectedDate(mapped[0] ?? null);
+    }).catch(() => setLoadError('No future showtimes are currently available.'));
+  }, [movie.id]);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    fetchTheatersForMovie(movie.id, selectedDate.id).then((items) => {
+      setTheaters(items); setSelectedTheater(items[0] ?? null); setSelectedShowtime(items[0]?.showtimes[0] ?? null);
+    }).catch(() => setLoadError('Unable to load showtimes.'));
+  }, [movie.id, selectedDate?.id]);
 
   const handleSelectShowtime = (theater: Theater, showtime: Showtime) => {
     setSelectedTheater(theater);
@@ -34,6 +51,7 @@ export const ShowtimeSelection = ({
   };
 
   const handleContinue = () => {
+    if (!selectedDate || !selectedTheater || !selectedShowtime) return;
     onContinueToSeats({
       movie,
       date: selectedDate,
@@ -125,8 +143,8 @@ export const ShowtimeSelection = ({
         <div className="showtime-section-inner">
           <h2 className="section-heading">1. Select Show Date</h2>
           <div className="date-pills-carousel" role="tablist" aria-label="Show dates">
-            {SAMPLE_SHOW_DATES.map((dateItem) => {
-              const isSelected = selectedDate.id === dateItem.id;
+            {dates.map((dateItem) => {
+              const isSelected = selectedDate?.id === dateItem.id;
               return (
                 <button
                   key={dateItem.id}
@@ -144,7 +162,7 @@ export const ShowtimeSelection = ({
             })}
           </div>
           <p className="selected-date-indicator">
-            📅 Showing showtimes for: <strong>{selectedDate.fullDate}</strong>
+            📅 Showing showtimes for: <strong>{selectedDate?.fullDate ?? 'Loading...'}</strong>
           </p>
         </div>
       </section>
@@ -154,11 +172,11 @@ export const ShowtimeSelection = ({
         <div className="showtime-section-inner">
           <h2 className="section-heading">2. Select Theater & Showtime</h2>
           <p className="section-disclaimer">
-            * Note: Showtimes and statuses are sample frontend previews for Milestone 2.
+            Remaining-seat availability is calculated from the database.
           </p>
 
           <div className="theaters-stack">
-            {SAMPLE_THEATERS.map((theater) => (
+            {theaters.map((theater) => (
               <article key={theater.id} className="theater-block">
                 <div className="theater-info-row">
                   <div>
@@ -176,8 +194,8 @@ export const ShowtimeSelection = ({
                 <div className="showtimes-grid">
                   {theater.showtimes.map((st) => {
                     const isChosen =
-                      selectedTheater.id === theater.id &&
-                      selectedShowtime.id === st.id;
+                      selectedTheater?.id === theater.id &&
+                      selectedShowtime?.id === st.id;
                     return (
                       <button
                         key={st.id}
@@ -188,7 +206,7 @@ export const ShowtimeSelection = ({
                       >
                         <span className="st-time-text">{st.time}</span>
                         <span className="st-format-text">{st.format}</span>
-                        <span className="st-status-badge">{st.status}</span>
+                        <span className="st-status-badge">{st.status} · {(st as Showtime & { available_seats?: number }).available_seats ?? 80} seats left</span>
                         <span className="st-price-tag">₹{st.price}</span>
                       </button>
                     );
@@ -207,27 +225,29 @@ export const ShowtimeSelection = ({
             <span className="summary-label">Currently Selected:</span>
             <div className="summary-values">
               <span className="summary-pill movie-pill">🎬 {movie.title}</span>
-              <span className="summary-pill date-pill">📅 {selectedDate.label} ({selectedDate.day} {selectedDate.month})</span>
-              <span className="summary-pill theater-pill">📍 {selectedTheater.name}</span>
-              <span className="summary-pill time-pill">⏰ {selectedShowtime.time} ({selectedShowtime.format})</span>
+              <span className="summary-pill date-pill">📅 {selectedDate?.label ?? 'Choose a date'}</span>
+              <span className="summary-pill theater-pill">📍 {selectedTheater?.name ?? 'Choose a theater'}</span>
+              <span className="summary-pill time-pill">⏰ {selectedShowtime ? `${selectedShowtime.time} (${selectedShowtime.format})` : 'Choose a showtime'}</span>
             </div>
           </div>
 
           <div className="sticky-bar-actions">
             <div className="summary-price-box">
               <span className="price-title">Ticket Price</span>
-              <span className="price-amount">₹{selectedShowtime.price}</span>
+              <span className="price-amount">₹{selectedShowtime?.price ?? 0}</span>
             </div>
             <button
               type="button"
               className="btn btn-primary btn-lg continue-btn"
               onClick={handleContinue}
+              disabled={!selectedDate || !selectedTheater || !selectedShowtime}
             >
               <span>Continue to Seats →</span>
             </button>
           </div>
         </div>
       </aside>
+      {loadError && <p className="api-status-banner api-error-banner">{loadError}</p>}
     </div>
   );
 };

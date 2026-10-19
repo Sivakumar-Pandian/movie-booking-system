@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { BookingSelection, BookingConfirmation, PaymentMethod } from '../types/booking';
 import type { AuthUser } from '../types/auth';
-import { createRealBooking } from '../services/bookingApi';
+import { confirmHeldPayment } from '../services/bookingApi';
 
 interface BookingSummaryProps {
   selection: BookingSelection;
@@ -10,6 +10,7 @@ interface BookingSummaryProps {
   onRequestAuth: () => void;
   onBackToSeats: () => void;
   onPaymentSuccess: (confirmation: BookingConfirmation) => void;
+  holdExpiresAt: string | null;
 }
 
 export const BookingSummary = ({
@@ -19,6 +20,7 @@ export const BookingSummary = ({
   onRequestAuth,
   onBackToSeats,
   onPaymentSuccess,
+  holdExpiresAt,
 }: BookingSummaryProps) => {
   const { movie, date, theater, showtime } = selection;
 
@@ -42,6 +44,14 @@ export const BookingSummary = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [simulationMode, setSimulationMode] = useState<'success' | 'failure'>('success');
+  const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!holdExpiresAt) return;
+    const update = () => setSecondsRemaining(Math.max(0, Math.ceil((new Date(holdExpiresAt).getTime() - Date.now()) / 1000)));
+    update(); const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, [holdExpiresAt]);
 
   // Validation: Guard against checkout if no seats are selected
   const hasValidSeats = seatCount > 0;
@@ -72,21 +82,7 @@ export const BookingSummary = ({
 
     try {
       // Persist real booking to backend database with atomic double-booking safety
-      const savedBooking = await createRealBooking({
-        showtime_id: showtime.id,
-        movie_title: movie.title,
-        theater_name: theater.name,
-        theater_location: theater.location,
-        show_date: date.fullDate,
-        show_time: showtime.time,
-        format: showtime.format,
-        seats: selectedSeats,
-        payment_method: paymentMethod,
-        price_per_seat: pricePerSeat,
-        subtotal: subtotal,
-        convenience_fee: convenienceFee,
-        total_amount: totalAmount,
-      });
+      const savedBooking = await confirmHeldPayment(showtime.id, selectedSeats, paymentMethod);
 
       const timestamp = new Date(savedBooking.created_at).toLocaleString('en-IN', {
         dateStyle: 'medium',
@@ -151,6 +147,7 @@ export const BookingSummary = ({
         )}
 
         <div className="summary-card-container">
+          {secondsRemaining !== null && <p className="seat-selection-limit" role="status">Seats held for {Math.floor(secondsRemaining / 60)}:{String(secondsRemaining % 60).padStart(2, '0')}</p>}
           {/* Header Ticket Strip */}
           <div className="ticket-header-strip">
             <span className="ticket-icon">🎟️</span>

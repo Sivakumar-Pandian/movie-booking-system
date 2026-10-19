@@ -23,6 +23,7 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=False)
+    role = Column(String(20), nullable=False, default="CUSTOMER")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     bookings = relationship("Booking", back_populates="user")
@@ -120,7 +121,7 @@ class Booking(Base):
     convenience_fee = Column(Integer, nullable=False)
     total_amount = Column(Integer, nullable=False)
     payment_method = Column(String(50), nullable=False)
-    payment_status = Column(String(50), default="COMPLETED", nullable=False)
+    payment_status = Column(String(50), default="CONFIRMED", nullable=False)
     movie_title = Column(String(255), nullable=True)
     theater_name = Column(String(255), nullable=True)
     theater_location = Column(String(255), nullable=True)
@@ -150,3 +151,18 @@ class BookedSeat(Base):
 
     booking = relationship("Booking", back_populates="seats")
     showtime = relationship("Showtime", back_populates="booked_seats")
+
+
+class SeatHold(Base):
+    """A temporary, user-owned reservation that expires unless payment succeeds."""
+    __tablename__ = "seat_holds"
+    __table_args__ = (
+        UniqueConstraint("showtime_id", "seat_number", name="uq_showtime_held_seat"),
+        Index("ix_seat_holds_expiry", "expires_at"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    showtime_id = Column(String(80), ForeignKey("showtimes.id"), nullable=False, index=True)
+    seat_number = Column(String(10), nullable=False)
+    expires_at = Column(DateTime, nullable=False)

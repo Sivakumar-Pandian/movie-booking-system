@@ -15,6 +15,7 @@ import { BookingConfirmationView } from './components/BookingConfirmationView';
 import { TrailerModal } from './components/TrailerModal';
 import { AuthModal } from './components/AuthModal';
 import { MyBookingsModal } from './components/MyBookingsModal';
+import { AdminDashboard } from './components/AdminDashboard';
 import { Footer } from './components/Footer';
 import './App.css';
 
@@ -30,6 +31,7 @@ function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMessage, setAuthModalMessage] = useState<string | undefined>();
   const [isBookingsModalOpen, setIsBookingsModalOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   // Backend Live Movie Data States
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -40,6 +42,8 @@ function App() {
   const [selectedMovieForBooking, setSelectedMovieForBooking] = useState<Movie | null>(null);
   const [activeBookingSelection, setActiveBookingSelection] = useState<BookingSelection | null>(null);
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [seatSelectionError, setSeatSelectionError] = useState<string | null>(null);
+  const [holdExpiresAt, setHoldExpiresAt] = useState<string | null>(null);
   const [activeConfirmation, setActiveConfirmation] = useState<BookingConfirmation | null>(null);
 
   // Search, City & Filter State
@@ -211,11 +215,18 @@ function App() {
 
   // Handler: Toggle a seat in the lifted selectedSeats state
   const handleToggleSeat = (seatId: string) => {
-    setSelectedSeats((prev) =>
-      prev.includes(seatId)
-        ? prev.filter((id) => id !== seatId) // Deselect
-        : [...prev, seatId] // Select
-    );
+    setSelectedSeats((prev) => {
+      if (prev.includes(seatId)) {
+        setSeatSelectionError(null);
+        return prev.filter((id) => id !== seatId);
+      }
+      if (prev.length >= 6) {
+        setSeatSelectionError('You can select a maximum of 6 seats per booking.');
+        return prev;
+      }
+      setSeatSelectionError(null);
+      return [...prev, seatId];
+    });
   };
 
   // Handler: From seat selection, go back to change showtime
@@ -278,6 +289,7 @@ function App() {
           }
         }}
         onLogout={handleLogout}
+        onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
       <main className="main-content">
@@ -380,13 +392,19 @@ function App() {
 
         {/* VIEW 3: Interactive Seat Selection */}
         {currentView === 'SEAT_SELECTION' && activeBookingSelection && (
+          <>
           <SeatSelection
             booking={activeBookingSelection}
             selectedSeats={selectedSeats}
             onToggleSeat={handleToggleSeat}
             onBackToShowtimes={handleBackToShowtimes}
             onProceedToSummary={handleProceedToSummary}
+            currentUser={currentUser}
+            onRequestAuth={() => handleOpenAuth('Please sign in to hold seats for five minutes.')}
+            onHoldCreated={setHoldExpiresAt}
           />
+          {seatSelectionError && <p className="seat-selection-limit" role="alert">{seatSelectionError}</p>}
+          </>
         )}
 
         {/* VIEW 4: Booking Summary & Mock Payment Gateway */}
@@ -400,6 +418,7 @@ function App() {
             }
             onBackToSeats={handleBackToSeats}
             onPaymentSuccess={handlePaymentSuccess}
+            holdExpiresAt={holdExpiresAt}
           />
         )}
 
@@ -436,6 +455,7 @@ function App() {
         onClose={() => setIsBookingsModalOpen(false)}
         currentUser={currentUser}
       />
+      <AdminDashboard isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
     </div>
   );
 }

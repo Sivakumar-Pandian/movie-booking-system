@@ -9,6 +9,7 @@ interface NavbarProps {
   onOpenAuth: () => void;
   onOpenBookings: () => void;
   onLogout: () => void;
+  onOpenAdmin: () => void;
 }
 
 export const Navbar = ({
@@ -20,6 +21,7 @@ export const Navbar = ({
   onOpenAuth,
   onOpenBookings,
   onLogout,
+  onOpenAdmin,
 }: NavbarProps) => {
   return (
     <header className="navbar">
@@ -88,6 +90,7 @@ export const Navbar = ({
                 >
                   🎟️ My Tickets
                 </button>
+                {currentUser.role === 'ADMIN' && <button type="button" className="btn btn-outline nav-bookings-btn" onClick={onOpenAdmin}>Admin</button>}
                 <div className="nav-user-profile" title={currentUser.email}>
                   <span className="avatar-icon">👤</span>
                   <span className="user-name-text">

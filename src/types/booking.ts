@@ -14,6 +14,7 @@ export interface Showtime {
   format: string; // e.g. "IMAX 3D", "4DX", "2D"
   status: 'Available' | 'Filling Fast' | 'Almost Full';
   price: number;
+  available_seats?: number;
 }
 
 export interface Theater {

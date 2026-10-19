@@ -9,6 +9,7 @@ A production-grade, end-to-end Movie Ticket Booking web application built with a
 - **Cinematic Movie Catalog**: Live movie catalog dynamically loaded from the FastAPI backend with genre/format filtering, search, and trailer popups.
 - **Showtime & Theater Selection**: Multi-day scheduling across flagship cinema locations (IMAX 3D, 4DX, Dolby Cinema).
 - **Interactive Seat Matrix**: Real-time cinema seating chart with visual screen indicator, aisle layout, seat tier pricing, and live synchronized booked seats.
+- **Seat Holds**: Selected seats are held for five minutes before payment; expired holds are released automatically.
 - **Double Booking Prevention**: Robust dual-layer concurrency protection:
   - Database-level `UniqueConstraint("showtime_id", "seat_number", name="uq_showtime_seat")`
   - Explicit database transaction checks with automatic rollback and `409 Conflict` status code responses.
@@ -147,6 +148,34 @@ Validate TypeScript typings and produce production client bundle:
 ```bash
 npm run build
 ```
+
+## 🔑 Seeded Test Accounts
+
+The API creates these accounts on first start. Public registration always creates a customer account.
+
+| Role | Email | Password |
+|---|---|---|
+| Customer | `customer@yozigo.test` | `DemoCustomer2026!` |
+| Admin | `admin@yozigo.test` | `DemoAdmin2026!` |
+
+## ✅ Task Flow Coverage
+
+- Flows 1–6: customer registration/JWT authentication, dynamic movie and future-showtime data, an 8×10 live seat map, five-minute holds, mock payment confirmation/failure, protected booking history, and cancellation more than two hours before a show.
+- Flow 7: protected admin APIs for movie CRUD, show creation/deletion, overlap validation, and per-show occupancy/revenue reporting.
+- Flow 8: cancellation is implemented.
+- Flow 9: admin reporting API is implemented.
+- Flow 10: the customer seat map polls the API every five seconds.
+
+## 🧭 Main Design Decisions
+
+- FastAPI and SQLAlchemy keep API validation, transactions, and database constraints close together.
+- PostgreSQL is supported for deployment; SQLite is the zero-configuration local-development default.
+- Passwords are hashed with bcrypt and access is protected using signed JWT bearer tokens.
+- A `UNIQUE(showtime_id, seat_number)` constraint is the final guard against double booking.
+- Temporary `seat_holds` are user-owned, expire after five minutes, and use a unique seat/showtime constraint to prevent competing holds.
+- The backend calculates ticket prices from the selected showtime and does not trust client-submitted totals.
+- Seat availability uses five-second polling: it is simple, reliable, and sufficient for this small application.
+- Admin actions are authorized server-side using a seeded `ADMIN` role; normal sign-up cannot create an admin.
 
 ---
 
